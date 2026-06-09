@@ -1,18 +1,18 @@
 {
 	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
 	"type": "connection",
-	"id": "your-module-name",
-	"name": "your-module-name",
-	"shortname": "module-shortname",
+	"id": "liveplay",
+	"name": "LivePlay",
+	"shortname": "liveplay",
 	"description": "A short one line description of your module",
 	"version": "0.0.0",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-your-module-name.git",
-	"bugs": "https://github.com/bitfocus/companion-module-your-module-name/issues",
+	"repository": "git+https://github.com/DaniK-51/companion-module-liveplay.git",
+	"bugs": "https://github.com/DaniK-51/companion-module-liveplay/issues",
 	"maintainers": [
 		{
-			"name": "Your name",
-			"email": "Your email"
+			"name": "Daniyar",
+			"email": "danijarfairushin@gmail.com"
 		}
 	],
 	"runtime": {
@@ -22,7 +22,7 @@
 		"entrypoint": "../dist/main.js"
 	},
 	"legacyIds": [],
-	"manufacturer": "Your company",
-	"products": ["Your product"],
+	"manufacturer": "LivePlay",
+	"products": ["LivePlay"],
 	"keywords": []
 }
