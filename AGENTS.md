@@ -380,3 +380,14 @@ perf(feedbacks): reduce feedback update frequency
 - **docs/**: For documentation changes (e.g., `docs/api-reference`)
 - **refactor/**: For refactoring (e.g., `refactor/variable-system`)
 - **hotfix/**: For emergency fixes (e.g., `hotfix/security-patch`)
+
+## Build Process: Transforming Source Code (src) into the Final Bundle
+
+The `src` directory contains human-readable code, strict typing, and tests. When running build commands (e.g., `npm run package`), a multi-stage transformation occurs to create a compact production package:
+
+1. **TypeScript Compilation**: All type annotations, interfaces, and generics are stripped out. Test files and mocks are physically excluded from the build via `tsconfig.build.json`.
+2. **Bundling & Tree Shaking**: The bundler builds a single dependency graph. Any unused code (dead code) and unused parts of third-party libraries are automatically dropped.
+3. **Minification**: Identifiers are renamed to short names, and whitespace, newlines, and comments are removed.
+4. **External Dependencies**: Core host environment dependencies (e.g., `@companion-module/base`) are not bundled into the final file; instead, they are resolved from the runtime environment.
+
+> **Context for AI Agents:** Due to tree shaking and minification, the structure, sizes, and names in the compiled `dist` folder can differ radically from `src`. When analyzing business logic, debugging, or refactoring, **always rely exclusively on the source code in `src`**, ignoring the generated bundle.
