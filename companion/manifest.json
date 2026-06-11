@@ -4,7 +4,7 @@
 	"id": "liveplay",
 	"name": "LivePlay",
 	"shortname": "liveplay",
-	"description": "A short one line description of your module",
+	"description": "Companion module for LivePlay audio playback software",
 	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/DaniK-51/companion-module-liveplay.git",

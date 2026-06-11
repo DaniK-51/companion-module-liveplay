@@ -13,6 +13,7 @@ import {
 	type CueStateMessage,
 	type PlaybackSnapshotMessage,
 	type MeterMessage,
+	type MeterChannel,
 } from './websocket-client.js'
 
 export type ModuleSchema = {
@@ -29,7 +30,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	config!: ModuleConfig
 	apiClient: LivePlayApiClient | null = null
 	webSocketClient: LivePlayWebSocket | null = null
-	connectionStatus: InstanceStatus = InstanceStatus.Ok
+	connectionStatus: InstanceStatus = InstanceStatus.UnknownWarning
+	connectionMonitorIntervalId: ReturnType<typeof setInterval> | null = null
 	updateIntervalId: ReturnType<typeof setInterval> | null = null
 
 	// State from WebSocket
@@ -47,6 +49,14 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		currentCueId: '',
 	}
 
+	// Meter state
+	masterPeakDb = -Infinity
+	masterRmsDb = -Infinity
+	masterGainReductionDb = 0
+	mixerPeakDb = -Infinity
+	mixerRmsDb = -Infinity
+	cueMeterLevels = new Map<string, MeterChannel[]>() // cue_id → source channels
+
 	constructor(internal: unknown) {
 		super(internal)
 	}
@@ -59,6 +69,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.webSocketClient = new LivePlayWebSocket(config)
 		this.webSocketClient.setLogger((level, message) => this.log(level, message))
 		this.setupWebSocketHandlers()
+		this.webSocketClient.connect()
 
 		void this.startConnectionMonitoring()
 
@@ -79,7 +90,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				this.updateStatus(InstanceStatus.Ok)
 				this.log('info', 'Connected to LivePlay server')
 			} else {
-				this.updateStatus(InstanceStatus.Connecting)
+				this.updateStatus(InstanceStatus.UnknownWarning)
 				this.log('warn', 'Disconnected from LivePlay server')
 			}
 		})
@@ -141,9 +152,30 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		}
 	}
 
-	private handleMeterUpdate(_msg: MeterMessage): void {
+	private handleMeterUpdate(msg: MeterMessage): void {
+		if (msg.master_channels.length > 0) {
+			const master = msg.master_channels[0]
+			this.masterPeakDb = master.peak_db
+			this.masterRmsDb = master.rms_db
+			this.masterGainReductionDb = master.gain_reduction_db
+		}
+
+		if (msg.mixer_channels.length > 0) {
+			const mixer = msg.mixer_channels[0]
+			this.mixerPeakDb = mixer.peak_db
+			this.mixerRmsDb = mixer.rms_db
+		}
+
+		this.cueMeterLevels.clear()
+		for (const item of msg.items) {
+			this.cueMeterLevels.set(item.cue_id, item.sources)
+		}
+
 		if (this.config.debugLogging) {
-			this.log('debug', `meters update`)
+			this.log(
+				'debug',
+				`meters: master=${this.masterPeakDb.toFixed(1)}dB mix=${this.mixerPeakDb.toFixed(1)}dB cues=${msg.items.length}`,
+			)
 		}
 	}
 
@@ -186,29 +218,35 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	private async startConnectionMonitoring(): Promise<void> {
 		const checkConnection = async () => {
 			try {
-				if (this.apiClient && this.connectionStatus !== InstanceStatus.Ok) {
+				if (this.apiClient) {
 					const isHealthy = await this.apiClient.checkHealth()
 					if (isHealthy) {
-						this.updateStatus(InstanceStatus.Ok)
-						this.webSocketClient?.connect()
+						if (this.connectionStatus !== InstanceStatus.Ok) {
+							this.updateStatus(InstanceStatus.Ok)
+						}
+						if (!this.webSocketClient?.isConnectedToServer()) {
+							this.webSocketClient?.connect()
+						}
 					} else {
-						this.updateStatus(InstanceStatus.Connecting)
+						if (this.connectionStatus !== InstanceStatus.UnknownWarning) {
+							this.updateStatus(InstanceStatus.UnknownWarning)
+						}
 					}
 				}
 			} catch (_error) {
-				if (this.connectionStatus !== InstanceStatus.Connecting) {
-					this.updateStatus(InstanceStatus.Connecting)
+				if (this.connectionStatus !== InstanceStatus.UnknownWarning) {
+					this.updateStatus(InstanceStatus.UnknownWarning)
 				}
 			}
 		}
 
 		await checkConnection()
 
-		if (this.updateIntervalId) {
-			clearInterval(this.updateIntervalId)
+		if (this.connectionMonitorIntervalId) {
+			clearInterval(this.connectionMonitorIntervalId)
 		}
 
-		this.updateIntervalId = setInterval(() => {
+		this.connectionMonitorIntervalId = setInterval(() => {
 			void checkConnection()
 		}, 30000)
 	}
@@ -230,6 +268,11 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	async destroy(): Promise<void> {
 		this.log('debug', 'destroy')
+
+		if (this.connectionMonitorIntervalId) {
+			clearInterval(this.connectionMonitorIntervalId)
+			this.connectionMonitorIntervalId = null
+		}
 
 		if (this.updateIntervalId) {
 			clearInterval(this.updateIntervalId)

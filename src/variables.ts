@@ -8,6 +8,11 @@ export type VariablesSchema = {
 	master_gain: number
 	active_cue_count: number
 	current_cue_id: string
+	master_peak_db: number
+	master_rms_db: number
+	master_gain_reduction_db: number
+	mixer_peak_db: number
+	mixer_rms_db: number
 }
 
 export function UpdateVariableDefinitions(self: ModuleInstance): void {
@@ -19,6 +24,11 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		master_gain: { name: 'Master Gain (dB)' },
 		active_cue_count: { name: 'Active Cue Count' },
 		current_cue_id: { name: 'Current Cue ID' },
+		master_peak_db: { name: 'Master Peak (dB)' },
+		master_rms_db: { name: 'Master RMS (dB)' },
+		master_gain_reduction_db: { name: 'Master Gain Reduction (dB)' },
+		mixer_peak_db: { name: 'Mixer Peak (dB)' },
+		mixer_rms_db: { name: 'Mixer RMS (dB)' },
 	})
 }
 
@@ -39,5 +49,10 @@ export function UpdateVariables(self: ModuleInstance): void {
 		master_gain: state.masterGain,
 		active_cue_count: state.activeCueCount,
 		current_cue_id: state.currentCueId,
+		master_peak_db: self.masterPeakDb,
+		master_rms_db: self.masterRmsDb,
+		master_gain_reduction_db: self.masterGainReductionDb,
+		mixer_peak_db: self.mixerPeakDb,
+		mixer_rms_db: self.mixerRmsDb,
 	})
 }
