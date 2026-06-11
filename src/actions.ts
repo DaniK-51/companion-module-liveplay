@@ -5,7 +5,6 @@ export type ActionsSchema = {
 		options: {
 			cueId: string
 			useUuid: boolean
-			fadeTime: number
 		}
 	}
 	stop_cue: {
@@ -29,38 +28,31 @@ export type ActionsSchema = {
 	seek_cue: {
 		options: {
 			cueId: string
-			position: number
 			useUuid: boolean
+			seconds: number
+		}
+	}
+	set_cue_gain: {
+		options: {
+			cueId: string
+			useUuid: boolean
+			db: number
+		}
+	}
+	set_cue_fade: {
+		options: {
+			cueId: string
+			useUuid: boolean
+			inMs: number
+			outMs: number
 		}
 	}
 	stop_all: {
 		options: Record<string, never>
 	}
-	play: {
-		options: Record<string, never>
-	}
-	pause: {
-		options: Record<string, never>
-	}
-	next: {
-		options: Record<string, never>
-	}
-	previous: {
-		options: Record<string, never>
-	}
 	set_master_gain: {
 		options: {
-			gainDb: number
-		}
-	}
-	play_cart: {
-		options: {
-			slot: number
-		}
-	}
-	clear_cart: {
-		options: {
-			slot: number
+			db: number
 		}
 	}
 }
@@ -73,33 +65,26 @@ export function UpdateActions(self: ModuleInstance): void {
 				{
 					id: 'cueId',
 					type: 'textinput',
-					label: 'Cue ID',
+					label: 'Cue ID or UUID',
 					default: '',
 				},
 				{
 					id: 'useUuid',
 					type: 'checkbox',
-					label: 'Use UUID instead of Cue ID',
+					label: 'Use UUID (uncheck for engine cue_id)',
 					default: true,
 				},
-				{
-					id: 'fadeTime',
-					type: 'number',
-					label: 'Fade Time (ms)',
-					default: 0,
-					min: 0,
-					max: 10000,
-				},
 			],
-			callback: async (event) => {
-				try {
-					const options = event.options as any
-					if (self.apiClient) {
-						await self.apiClient.playCue(options.cueId, options.useUuid, options.fadeTime)
-						self.log('info', `Playing cue: ${options.cueId}`)
-					}
-				} catch (error) {
-					self.log('error', `Failed to play cue: ${error}`)
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Play Cue: no cue ID provided')
+					return
+				}
+				if (opts.useUuid) {
+					self.webSocketClient?.send({ type: 'play', item_uuid: opts.cueId })
+				} else {
+					self.webSocketClient?.send({ type: 'play', cue_id: opts.cueId })
 				}
 			},
 		},
@@ -109,25 +94,26 @@ export function UpdateActions(self: ModuleInstance): void {
 				{
 					id: 'cueId',
 					type: 'textinput',
-					label: 'Cue ID',
+					label: 'Cue ID or UUID',
 					default: '',
 				},
 				{
 					id: 'useUuid',
 					type: 'checkbox',
-					label: 'Use UUID instead of Cue ID',
+					label: 'Use UUID (uncheck for engine cue_id)',
 					default: true,
 				},
 			],
-			callback: async (event) => {
-				try {
-					const options = event.options as any
-					if (self.apiClient) {
-						await self.apiClient.stopCue(options.cueId, options.useUuid)
-						self.log('info', `Stopping cue: ${options.cueId}`)
-					}
-				} catch (error) {
-					self.log('error', `Failed to stop cue: ${error}`)
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Stop Cue: no cue ID provided')
+					return
+				}
+				if (opts.useUuid) {
+					self.webSocketClient?.send({ type: 'stop', item_uuid: opts.cueId })
+				} else {
+					self.webSocketClient?.send({ type: 'stop', cue_id: opts.cueId })
 				}
 			},
 		},
@@ -137,25 +123,26 @@ export function UpdateActions(self: ModuleInstance): void {
 				{
 					id: 'cueId',
 					type: 'textinput',
-					label: 'Cue ID',
+					label: 'Cue ID or UUID',
 					default: '',
 				},
 				{
 					id: 'useUuid',
 					type: 'checkbox',
-					label: 'Use UUID instead of Cue ID',
+					label: 'Use UUID (uncheck for engine cue_id)',
 					default: true,
 				},
 			],
-			callback: async (event) => {
-				try {
-					const options = event.options as any
-					if (self.apiClient) {
-						await self.apiClient.pauseCue(options.cueId, options.useUuid)
-						self.log('info', `Pausing cue: ${options.cueId}`)
-					}
-				} catch (error) {
-					self.log('error', `Failed to pause cue: ${error}`)
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Pause Cue: no cue ID provided')
+					return
+				}
+				if (opts.useUuid) {
+					self.webSocketClient?.send({ type: 'pause', item_uuid: opts.cueId })
+				} else {
+					self.webSocketClient?.send({ type: 'pause', cue_id: opts.cueId })
 				}
 			},
 		},
@@ -165,25 +152,26 @@ export function UpdateActions(self: ModuleInstance): void {
 				{
 					id: 'cueId',
 					type: 'textinput',
-					label: 'Cue ID',
+					label: 'Cue ID or UUID',
 					default: '',
 				},
 				{
 					id: 'useUuid',
 					type: 'checkbox',
-					label: 'Use UUID instead of Cue ID',
+					label: 'Use UUID (uncheck for engine cue_id)',
 					default: true,
 				},
 			],
-			callback: async (event) => {
-				try {
-					const options = event.options as any
-					if (self.apiClient) {
-						await self.apiClient.resumeCue(options.cueId, options.useUuid)
-						self.log('info', `Resuming cue: ${options.cueId}`)
-					}
-				} catch (error) {
-					self.log('error', `Failed to resume cue: ${error}`)
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Resume Cue: no cue ID provided')
+					return
+				}
+				if (opts.useUuid) {
+					self.webSocketClient?.send({ type: 'resume', item_uuid: opts.cueId })
+				} else {
+					self.webSocketClient?.send({ type: 'resume', cue_id: opts.cueId })
 				}
 			},
 		},
@@ -193,17 +181,17 @@ export function UpdateActions(self: ModuleInstance): void {
 				{
 					id: 'cueId',
 					type: 'textinput',
-					label: 'Cue ID',
+					label: 'Cue ID or UUID',
 					default: '',
 				},
 				{
 					id: 'useUuid',
 					type: 'checkbox',
-					label: 'Use UUID instead of Cue ID',
+					label: 'Use UUID (uncheck for engine cue_id)',
 					default: true,
 				},
 				{
-					id: 'position',
+					id: 'seconds',
 					type: 'number',
 					label: 'Position (seconds)',
 					default: 0,
@@ -211,159 +199,123 @@ export function UpdateActions(self: ModuleInstance): void {
 					max: 86400,
 				},
 			],
-			callback: async (event) => {
-				try {
-					const options = event.options as any
-					if (self.apiClient) {
-						await self.apiClient.seekCue(options.cueId, options.position, options.useUuid)
-						self.log('info', `Seeking cue ${options.cueId} to position: ${options.position}s`)
-					}
-				} catch (error) {
-					self.log('error', `Failed to seek cue: ${error}`)
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Seek Cue: no cue ID provided')
+					return
+				}
+				if (opts.useUuid) {
+					self.webSocketClient?.send({ type: 'seek', item_uuid: opts.cueId, seconds: opts.seconds })
+				} else {
+					self.webSocketClient?.send({ type: 'seek', cue_id: opts.cueId, seconds: opts.seconds })
+				}
+			},
+		},
+		set_cue_gain: {
+			name: 'Set Cue Gain',
+			options: [
+				{
+					id: 'cueId',
+					type: 'textinput',
+					label: 'Cue ID or UUID',
+					default: '',
+				},
+				{
+					id: 'useUuid',
+					type: 'checkbox',
+					label: 'Use UUID (uncheck for engine cue_id)',
+					default: true,
+				},
+				{
+					id: 'db',
+					type: 'number',
+					label: 'Gain (dB)',
+					default: 0,
+					min: -60,
+					max: 20,
+				},
+			],
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Set Cue Gain: no cue ID provided')
+					return
+				}
+				if (opts.useUuid) {
+					self.webSocketClient?.send({ type: 'gain', item_uuid: opts.cueId, db: opts.db })
+				} else {
+					self.webSocketClient?.send({ type: 'gain', cue_id: opts.cueId, db: opts.db })
+				}
+			},
+		},
+		set_cue_fade: {
+			name: 'Set Cue Fade',
+			options: [
+				{
+					id: 'cueId',
+					type: 'textinput',
+					label: 'Cue ID or UUID',
+					default: '',
+				},
+				{
+					id: 'useUuid',
+					type: 'checkbox',
+					label: 'Use UUID (uncheck for engine cue_id)',
+					default: true,
+				},
+				{
+					id: 'inMs',
+					type: 'number',
+					label: 'Fade In (ms)',
+					default: 0,
+					min: 0,
+					max: 30000,
+				},
+				{
+					id: 'outMs',
+					type: 'number',
+					label: 'Fade Out (ms)',
+					default: 0,
+					min: 0,
+					max: 30000,
+				},
+			],
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Set Cue Fade: no cue ID provided')
+					return
+				}
+				if (opts.useUuid) {
+					self.webSocketClient?.send({ type: 'fade', item_uuid: opts.cueId, in_ms: opts.inMs, out_ms: opts.outMs })
+				} else {
+					self.webSocketClient?.send({ type: 'fade', cue_id: opts.cueId, in_ms: opts.inMs, out_ms: opts.outMs })
 				}
 			},
 		},
 		stop_all: {
 			name: 'Stop All',
 			options: [],
-			callback: async () => {
-				try {
-					if (self.apiClient) {
-						await self.apiClient.stopAll()
-						self.log('info', 'Stopped all cues')
-					}
-				} catch (error) {
-					self.log('error', `Failed to stop all cues: ${error}`)
-				}
-			},
-		},
-		play: {
-			name: 'Play',
-			options: [],
-			callback: async () => {
-				try {
-					if (self.apiClient) {
-						await self.apiClient.play()
-						self.log('info', 'Started playback')
-					}
-				} catch (error) {
-					self.log('error', `Failed to start playback: ${error}`)
-				}
-			},
-		},
-		pause: {
-			name: 'Pause',
-			options: [],
-			callback: async () => {
-				try {
-					if (self.apiClient) {
-						await self.apiClient.pause()
-						self.log('info', 'Paused playback')
-					}
-				} catch (error) {
-					self.log('error', `Failed to pause playback: ${error}`)
-				}
-			},
-		},
-		next: {
-			name: 'Next',
-			options: [],
-			callback: async () => {
-				try {
-					if (self.apiClient) {
-						await self.apiClient.next()
-						self.log('info', 'Playing next cue')
-					}
-				} catch (error) {
-					self.log('error', `Failed to play next cue: ${error}`)
-				}
-			},
-		},
-		previous: {
-			name: 'Previous',
-			options: [],
-			callback: async () => {
-				try {
-					if (self.apiClient) {
-						await self.apiClient.previous()
-						self.log('info', 'Playing previous cue')
-					}
-				} catch (error) {
-					self.log('error', `Failed to play previous cue: ${error}`)
-				}
+			callback: () => {
+				self.webSocketClient?.send({ type: 'stop_all' })
 			},
 		},
 		set_master_gain: {
-			name: 'Set Master Volume',
+			name: 'Set Master Gain',
 			options: [
 				{
-					id: 'gainDb',
+					id: 'db',
 					type: 'number',
-					label: 'Gain (dB)',
+					label: 'Master Gain (dB)',
 					default: 0,
 					min: -60,
 					max: 20,
-					step: 0.1,
 				},
 			],
-			callback: async (event) => {
-				try {
-					const options = event.options as any
-					if (self.apiClient) {
-						await self.apiClient.setMasterGain(options.gainDb)
-						self.log('info', `Set master gain to: ${options.gainDb}dB`)
-					}
-				} catch (error) {
-					self.log('error', `Failed to set master gain: ${error}`)
-				}
-			},
-		},
-		play_cart: {
-			name: 'Play Cart',
-			options: [
-				{
-					id: 'slot',
-					type: 'number',
-					label: 'Cart Slot',
-					default: 1,
-					min: 1,
-					max: 16,
-				},
-			],
-			callback: async (event) => {
-				try {
-					const options = event.options as any
-					if (self.apiClient) {
-						await self.apiClient.playCart(options.slot)
-						self.log('info', `Playing cart slot: ${options.slot}`)
-					}
-				} catch (error) {
-					self.log('error', `Failed to play cart slot: ${error}`)
-				}
-			},
-		},
-		clear_cart: {
-			name: 'Clear Cart',
-			options: [
-				{
-					id: 'slot',
-					type: 'number',
-					label: 'Cart Slot',
-					default: 1,
-					min: 1,
-					max: 16,
-				},
-			],
-			callback: async (event) => {
-				try {
-					const options = event.options as any
-					if (self.apiClient) {
-						await self.apiClient.clearCart(options.slot)
-						self.log('info', `Cleared cart slot: ${options.slot}`)
-					}
-				} catch (error) {
-					self.log('error', `Failed to clear cart slot: ${error}`)
-				}
+			callback: (event) => {
+				const opts = event.options
+				void self.apiClient?.setMasterGain(opts.db)
 			},
 		},
 	})

@@ -6,7 +6,14 @@ import { UpdateActions, type ActionsSchema } from './actions.js'
 import { UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
 import { UpdatePresets } from './presets.js'
 import { LivePlayApiClient } from './liveplay-client.js'
-import { LivePlayWebSocket } from './websocket-client.js'
+import {
+	LivePlayWebSocket,
+	TransportState,
+	type ServerMessage,
+	type CueStateMessage,
+	type PlaybackSnapshotMessage,
+	type MeterMessage,
+} from './websocket-client.js'
 
 export type ModuleSchema = {
 	config: ModuleConfig
@@ -19,19 +26,25 @@ export type ModuleSchema = {
 export { UpgradeScripts }
 
 export default class ModuleInstance extends InstanceBase<ModuleSchema> {
-	config!: ModuleConfig // Setup in init()
+	config!: ModuleConfig
 	apiClient: LivePlayApiClient | null = null
 	webSocketClient: LivePlayWebSocket | null = null
 	connectionStatus: InstanceStatus = InstanceStatus.Ok
-	updateIntervalId: NodeJS.Timeout | null = null
-	playingCues = new Set<string>()
+	updateIntervalId: ReturnType<typeof setInterval> | null = null
+
+	// State from WebSocket
+	cueStates = new Map<string, TransportState>() // cue_id → transport
+	cuePositions = new Map<string, number>() // cue_id → playhead_seconds
+	uuidToCueId = new Map<string, string>() // item_uuid → cue_id
+	nextItemUuid: string | null = null
+
 	currentPlayerState = {
 		state: 'stopped',
 		position: 0,
-		duration: 0,
 		progress: 0,
-		masterVolume: 0,
-		currentCue: null as string | null,
+		masterGain: 0,
+		activeCueCount: 0,
+		currentCueId: '',
 	}
 
 	constructor(internal: unknown) {
@@ -41,24 +54,21 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	async init(config: ModuleConfig): Promise<void> {
 		this.config = config
 
-		// Initialize API client
 		this.apiClient = new LivePlayApiClient(config)
 
-		// Initialize WebSocket client
 		this.webSocketClient = new LivePlayWebSocket(config)
+		this.webSocketClient.setLogger((level, message) => this.log(level, message))
 		this.setupWebSocketHandlers()
 
-		// Start connection monitoring
 		void this.startConnectionMonitoring()
 
-		// Start update loop
 		this.startUpdateLoop()
 
 		this.updateStatus(InstanceStatus.Ok)
-		this.updateActions() // export actions
-		this.updateFeedbacks() // export feedbacks
-		this.updatePresets() // export Presets
-		this.updateVariableDefinitions() // export variable definitions
+		this.updateActions()
+		this.updateFeedbacks()
+		this.updatePresets()
+		this.updateVariableDefinitions()
 	}
 
 	private setupWebSocketHandlers(): void {
@@ -74,21 +84,103 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			}
 		})
 
-		this.webSocketClient.onMessage('cue_state', (data) => {
-			this.handleCueStateUpdate(data)
+		this.webSocketClient.onMessage('cue_state', (message) => {
+			this.handleCueState(message as CueStateMessage)
 		})
 
-		this.webSocketClient.onMessage('playback_snapshot', (data) => {
-			this.handlePlaybackSnapshot(data)
+		this.webSocketClient.onMessage('playback_snapshot', (message) => {
+			this.handlePlaybackSnapshot(message as PlaybackSnapshotMessage)
 		})
 
-		this.webSocketClient.onMessage('meters', (data) => {
-			this.handleMeterUpdate(data)
+		this.webSocketClient.onMessage('meters', (message) => {
+			this.handleMeterUpdate(message as MeterMessage)
 		})
 
-		this.webSocketClient.onMessage('doc_patch', (data) => {
-			this.handleDocPatch(data)
+		this.webSocketClient.onMessage('doc_patch', (message) => {
+			if (this.config.debugLogging) {
+				this.log('debug', `doc_patch: ${(message as ServerMessage & { op?: string }).op}`)
+			}
 		})
+	}
+
+	private handleCueState(msg: CueStateMessage): void {
+		this.cueStates.set(msg.cue_id, msg.transport)
+		this.cuePositions.set(msg.cue_id, msg.playhead_seconds)
+
+		if (msg.item_uuid) {
+			this.uuidToCueId.set(msg.item_uuid, msg.cue_id)
+		}
+
+		this.recalculateState()
+
+		if (this.config.debugLogging) {
+			this.log('debug', `cue_state: ${msg.cue_id} transport=${msg.transport} pos=${msg.playhead_seconds.toFixed(2)}s`)
+		}
+	}
+
+	private handlePlaybackSnapshot(msg: PlaybackSnapshotMessage): void {
+		this.cueStates.clear()
+		this.cuePositions.clear()
+		this.uuidToCueId.clear()
+
+		for (const cue of msg.cues) {
+			this.cueStates.set(cue.cue_id, cue.transport)
+			this.cuePositions.set(cue.cue_id, cue.playhead_seconds)
+			if (cue.item_uuid) {
+				this.uuidToCueId.set(cue.item_uuid, cue.cue_id)
+			}
+		}
+
+		this.nextItemUuid = msg.next_item_uuid || null
+		this.currentPlayerState.masterGain = msg.master_gain_db
+
+		this.recalculateState()
+
+		if (this.config.debugLogging) {
+			this.log('debug', `playback_snapshot: ${msg.cues.length} cues, master=${msg.master_gain_db}dB`)
+		}
+	}
+
+	private handleMeterUpdate(_msg: MeterMessage): void {
+		if (this.config.debugLogging) {
+			this.log('debug', `meters update`)
+		}
+	}
+
+	private recalculateState(): void {
+		let anyPlaying = false
+		let anyPaused = false
+		let activeCount = 0
+		let latestPlayingCueId = ''
+		let latestPosition = 0
+
+		for (const [cueId, transport] of this.cueStates) {
+			if (transport === TransportState.Playing || transport === TransportState.FadingOut) {
+				anyPlaying = true
+				activeCount++
+				const pos = this.cuePositions.get(cueId) ?? 0
+				if (pos >= latestPosition) {
+					latestPosition = pos
+					latestPlayingCueId = cueId
+				}
+			} else if (transport === TransportState.Paused) {
+				anyPaused = true
+				activeCount++
+			}
+		}
+
+		let stateStr = 'stopped'
+		if (anyPlaying) stateStr = 'playing'
+		else if (anyPaused) stateStr = 'paused'
+
+		this.currentPlayerState = {
+			state: stateStr,
+			position: latestPosition,
+			progress: 0,
+			masterGain: this.currentPlayerState.masterGain,
+			activeCueCount: activeCount,
+			currentCueId: latestPlayingCueId,
+		}
 	}
 
 	private async startConnectionMonitoring(): Promise<void> {
@@ -98,34 +190,27 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 					const isHealthy = await this.apiClient.checkHealth()
 					if (isHealthy) {
 						this.updateStatus(InstanceStatus.Ok)
-						if (this.webSocketClient) {
-							this.webSocketClient.connect()
-						}
+						this.webSocketClient?.connect()
 					} else {
 						this.updateStatus(InstanceStatus.Connecting)
 					}
 				}
-			} catch (error) {
+			} catch (_error) {
 				if (this.connectionStatus !== InstanceStatus.Connecting) {
 					this.updateStatus(InstanceStatus.Connecting)
-				}
-				if (this.config.debugLogging) {
-					this.log('debug', `Connection check failed: ${error}`)
 				}
 			}
 		}
 
-		// Check connection immediately
 		await checkConnection()
 
-		// Set up periodic connection checks
 		if (this.updateIntervalId) {
 			clearInterval(this.updateIntervalId)
 		}
 
 		this.updateIntervalId = setInterval(() => {
 			void checkConnection()
-		}, 30000) // Check every 30 seconds
+		}, 30000)
 	}
 
 	private startUpdateLoop(): void {
@@ -134,10 +219,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			this.updateFeedbacks()
 		}
 
-		// Run update immediately
 		update()
 
-		// Set up periodic updates
 		if (this.updateIntervalId) {
 			clearInterval(this.updateIntervalId)
 		}
@@ -145,65 +228,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.updateIntervalId = setInterval(update, this.config.updateInterval)
 	}
 
-	private handleCueStateUpdate(data: any): void {
-		const { uuid, state } = data
-
-		if (state === 'playing') {
-			this.playingCues.add(uuid)
-		} else {
-			this.playingCues.delete(uuid)
-		}
-
-		if (this.config.debugLogging) {
-			this.log('debug', `Cue ${uuid} state: ${state}`)
-		}
-	}
-
-	private handlePlaybackSnapshot(data: any): void {
-		this.currentPlayerState = {
-			...this.currentPlayerState,
-			state: this.getPlayerStateFromSnapshot(data),
-			currentCue: data.cues?.[0]?.uuid || null,
-		}
-
-		if (this.config.debugLogging) {
-			this.log('debug', `Playback snapshot: ${JSON.stringify(this.currentPlayerState)}`)
-		}
-	}
-
-	private handleMeterUpdate(_data: any): void {
-		// Handle meter data for future feedback implementations
-		if (this.config.debugLogging) {
-			this.log('debug', `Meter update received`)
-		}
-	}
-
-	private handleDocPatch(data: any): void {
-		// Handle document patches for project synchronization
-		if (this.config.debugLogging) {
-			this.log('debug', `Document patch received: ${JSON.stringify(data)}`)
-		}
-	}
-
-	private getPlayerStateFromSnapshot(snapshot: any): string {
-		if (!snapshot.cues || snapshot.cues.length === 0) {
-			return 'stopped'
-		}
-
-		const playingCues = snapshot.cues.filter((cue: any) => cue.state === 'playing')
-		if (playingCues.length > 0) {
-			return 'playing'
-		}
-
-		const pausedCues = snapshot.cues.filter((cue: any) => cue.state === 'paused')
-		if (pausedCues.length > 0) {
-			return 'paused'
-		}
-
-		return 'stopped'
-	}
-
-	// When module gets deleted
 	async destroy(): Promise<void> {
 		this.log('debug', 'destroy')
 
@@ -212,39 +236,31 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			this.updateIntervalId = null
 		}
 
-		if (this.apiClient) {
-			this.apiClient.destroy()
-			this.apiClient = null
-		}
-
 		if (this.webSocketClient) {
 			this.webSocketClient.destroy()
 			this.webSocketClient = null
 		}
 
-		this.playingCues.clear()
+		this.cueStates.clear()
+		this.cuePositions.clear()
+		this.uuidToCueId.clear()
 	}
 
 	async configUpdated(config: ModuleConfig): Promise<void> {
 		this.config = config
 
-		// Reinitialize clients with new config
-		if (this.apiClient) {
-			this.apiClient.destroy()
-		}
-		this.apiClient = new LivePlayApiClient(config)
-
 		if (this.webSocketClient) {
 			this.webSocketClient.destroy()
 		}
 		this.webSocketClient = new LivePlayWebSocket(config)
+		this.webSocketClient.setLogger((level, message) => this.log(level, message))
 		this.setupWebSocketHandlers()
 
-		// Restart update loop with new interval
+		this.webSocketClient.connect()
+
 		this.startUpdateLoop()
 	}
 
-	// Return config fields for web config
 	getConfigFields(): SomeCompanionConfigField[] {
 		return GetConfigFields()
 	}

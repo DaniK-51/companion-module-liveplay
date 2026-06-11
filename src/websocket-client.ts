@@ -1,50 +1,150 @@
 import type { ModuleConfig } from './config.js'
-import type { LivePlayMeterData } from './liveplay-client.js'
 
-export interface WebSocketMessage {
-	type: string
-	data?: any
-	timestamp?: number
+// Transport state values from LivePlay server
+export enum TransportState {
+	Stopped = 0,
+	Playing = 1,
+	FadingOut = 2,
+	Paused = 3,
 }
 
+// Server → client frames
 export interface CueStateMessage {
 	type: 'cue_state'
-	uuid: string
-	state: 'stopped' | 'playing' | 'paused' | 'fading_out'
-	position?: number
+	cue_id: string
+	transport: TransportState
+	playhead_seconds: number
+	item_uuid?: string
 }
 
 export interface PlaybackSnapshotMessage {
 	type: 'playback_snapshot'
 	cues: Array<{
-		uuid: string
-		state: string
-		position: number
-		duration: number
+		cue_id: string
+		transport: TransportState
+		playhead_seconds: number
+		item_uuid?: string
 	}>
-	master_volume: number
+	next_item_uuid?: string
+	master_gain_db: number
+	output_channel_gains?: Array<{ channel: number; db: number }>
+	preview?: { item_uuid: string; cue_id: string }
 }
 
-export interface DocPatchMessage {
-	type: 'doc_patch'
-	operations: Array<{
-		op: string
-		path: string
-		value?: any
-	}>
+export interface MeterChannel {
+	peak_db: number
+	rms_db: number
+}
+
+export interface MeterItem {
+	cue_id: string
+	transport: TransportState
+	playhead_seconds: number
+	sources: MeterChannel[]
 }
 
 export interface MeterMessage {
 	type: 'meters'
-	data: LivePlayMeterData
+	items: MeterItem[]
+	mixer_channels: Array<{ mixer_id: string; peak_db: number; rms_db: number }>
+	master_channels: Array<{ index: number; peak_db: number; rms_db: number; gain_reduction_db: number }>
 }
 
-export type LivePlayWebSocketMessage =
+export interface DocPatchMessage {
+	type: 'doc_patch'
+	op: string
+	[key: string]: unknown
+}
+
+export interface PongMessage {
+	type: 'pong'
+}
+
+export interface ErrorMessage {
+	type: 'error'
+	message: string
+}
+
+export type ServerMessage =
 	| CueStateMessage
 	| PlaybackSnapshotMessage
-	| DocPatchMessage
 	| MeterMessage
-	| WebSocketMessage
+	| DocPatchMessage
+	| PongMessage
+	| ErrorMessage
+
+// Client → server frames
+export interface PlayFrame {
+	type: 'play'
+	item_uuid?: string
+	cue_id?: string
+}
+
+export interface StopFrame {
+	type: 'stop'
+	item_uuid?: string
+	cue_id?: string
+}
+
+export interface PauseFrame {
+	type: 'pause'
+	item_uuid?: string
+	cue_id?: string
+}
+
+export interface ResumeFrame {
+	type: 'resume'
+	item_uuid?: string
+	cue_id?: string
+}
+
+export interface SeekFrame {
+	type: 'seek'
+	item_uuid?: string
+	cue_id?: string
+	seconds: number
+}
+
+export interface GainFrame {
+	type: 'gain'
+	item_uuid?: string
+	cue_id?: string
+	db: number
+}
+
+export interface FadeFrame {
+	type: 'fade'
+	item_uuid?: string
+	cue_id?: string
+	in_ms: number
+	out_ms: number
+}
+
+export interface StopAllFrame {
+	type: 'stop_all'
+	fade_ms?: number
+}
+
+export interface SetNextItemFrame {
+	type: 'set_next_item'
+	item_uuid?: string
+}
+
+export interface PingFrame {
+	type: 'ping'
+}
+
+export type ClientFrame =
+	| PlayFrame
+	| StopFrame
+	| PauseFrame
+	| ResumeFrame
+	| SeekFrame
+	| GainFrame
+	| FadeFrame
+	| StopAllFrame
+	| SetNextItemFrame
+	| PingFrame
 
 export class LivePlayWebSocket {
 	private ws: WebSocket | null = null
@@ -52,17 +152,21 @@ export class LivePlayWebSocket {
 	private reconnectAttempts = 0
 	private maxReconnectAttempts = 5
 	private reconnectDelay = 1000
-	private reconnectTimer: NodeJS.Timeout | null = null
+	private reconnectTimer: ReturnType<typeof setTimeout> | null = null
 	private isConnected = false
-	private messageHandlers: Map<string, (data: any) => void> = new Map()
+	private messageHandlers: Map<string, (data: ServerMessage) => void> = new Map()
 	private connectionHandlers: Array<(connected: boolean) => void> = []
 	private isDestroyed = false
+	private moduleLog: ((level: 'info' | 'warn' | 'error' | 'debug', message: string) => void) | null = null
 
 	constructor(config: ModuleConfig) {
 		this.config = config
 	}
 
-	// Connection management
+	setLogger(logger: (level: 'info' | 'warn' | 'error' | 'debug', message: string) => void): void {
+		this.moduleLog = logger
+	}
+
 	connect(): void {
 		if (this.isDestroyed || this.isConnected) {
 			return
@@ -81,10 +185,10 @@ export class LivePlayWebSocket {
 
 			this.ws.onmessage = (event) => {
 				try {
-					const message = JSON.parse(event.data) as LivePlayWebSocketMessage
+					const message = JSON.parse(event.data) as ServerMessage
 					this.handleMessage(message)
-				} catch (error) {
-					this.log('error', `Failed to parse WebSocket message: ${error}`)
+				} catch (_error) {
+					this.log('error', `Failed to parse WebSocket message`)
 				}
 			}
 
@@ -95,9 +199,8 @@ export class LivePlayWebSocket {
 				this.reconnect()
 			}
 
-			this.ws.onerror = (_error) => {
+			this.ws.onerror = () => {
 				this.log('error', 'WebSocket error')
-				// Don't attempt to reconnect here, onclose will handle it
 			}
 		} catch (error) {
 			this.log('error', `Failed to connect to WebSocket: ${error}`)
@@ -143,8 +246,7 @@ export class LivePlayWebSocket {
 		}, delay)
 	}
 
-	// Message handling
-	private handleMessage(message: LivePlayWebSocketMessage): void {
+	private handleMessage(message: ServerMessage): void {
 		if (this.config.debugLogging) {
 			this.log('debug', `Received WebSocket message: ${JSON.stringify(message)}`)
 		}
@@ -152,16 +254,27 @@ export class LivePlayWebSocket {
 		const handler = this.messageHandlers.get(message.type)
 		if (handler) {
 			try {
-				const payload = 'data' in message ? message.data : message
-				handler(payload)
-			} catch (error) {
-				this.log('error', `Error in message handler for ${message.type}: ${error}`)
+				handler(message)
+			} catch (_error) {
+				this.log('error', `Error in message handler for ${message.type}`)
 			}
 		}
 	}
 
-	// Event handlers
-	onMessage(type: string, handler: (data: any) => void): void {
+	send(frame: ClientFrame): void {
+		if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+			this.log('warn', `Cannot send frame: WebSocket not connected`)
+			return
+		}
+
+		if (this.config.debugLogging) {
+			this.log('debug', `Sending WebSocket frame: ${JSON.stringify(frame)}`)
+		}
+
+		this.ws.send(JSON.stringify(frame))
+	}
+
+	onMessage(type: string, handler: (data: ServerMessage) => void): void {
 		this.messageHandlers.set(type, handler)
 	}
 
@@ -173,28 +286,24 @@ export class LivePlayWebSocket {
 		this.connectionHandlers.forEach((handler) => {
 			try {
 				handler(connected)
-			} catch (error) {
-				this.log('error', `Error in connection handler: ${error}`)
+			} catch (_error) {
+				this.log('error', `Error in connection handler`)
 			}
 		})
 	}
 
-	// Utility methods
 	isConnectedToServer(): boolean {
 		return this.isConnected
 	}
 
-	getReconnectAttempts(): number {
-		return this.reconnectAttempts
-	}
-
-	// Logging helper
 	private log(level: 'info' | 'warn' | 'error' | 'debug', message: string): void {
-		// This will be replaced with actual logger when integrated with main module
-		console.log(`[LivePlay WebSocket ${level.toUpperCase()}] ${message}`)
+		if (this.moduleLog) {
+			this.moduleLog(level, message)
+		} else {
+			console.log(`[LivePlay WebSocket ${level.toUpperCase()}] ${message}`)
+		}
 	}
 
-	// Cleanup
 	destroy(): void {
 		this.isDestroyed = true
 
