@@ -39,7 +39,7 @@ export interface MeterMessage {
 	data: LivePlayMeterData
 }
 
-export type LivePlayWebSocketMessage = 
+export type LivePlayWebSocketMessage =
 	| CueStateMessage
 	| PlaybackSnapshotMessage
 	| DocPatchMessage
@@ -95,11 +95,10 @@ export class LivePlayWebSocket {
 				this.reconnect()
 			}
 
-			this.ws.onerror = (error) => {
+			this.ws.onerror = (_error) => {
 				this.log('error', 'WebSocket error')
 				// Don't attempt to reconnect here, onclose will handle it
 			}
-
 		} catch (error) {
 			this.log('error', `Failed to connect to WebSocket: ${error}`)
 			this.reconnect()
@@ -133,9 +132,12 @@ export class LivePlayWebSocket {
 
 		this.reconnectAttempts++
 		const delay = this.reconnectDelay * this.reconnectAttempts
-		
-		this.log('info', `Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
-		
+
+		this.log(
+			'info',
+			`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
+		)
+
 		this.reconnectTimer = setTimeout(() => {
 			this.connect()
 		}, delay)
@@ -150,7 +152,8 @@ export class LivePlayWebSocket {
 		const handler = this.messageHandlers.get(message.type)
 		if (handler) {
 			try {
-				handler(message.data || message)
+				const payload = 'data' in message ? message.data : message
+				handler(payload)
 			} catch (error) {
 				this.log('error', `Error in message handler for ${message.type}: ${error}`)
 			}
@@ -167,7 +170,7 @@ export class LivePlayWebSocket {
 	}
 
 	private notifyConnectionHandlers(connected: boolean): void {
-		this.connectionHandlers.forEach(handler => {
+		this.connectionHandlers.forEach((handler) => {
 			try {
 				handler(connected)
 			} catch (error) {
@@ -194,7 +197,7 @@ export class LivePlayWebSocket {
 	// Cleanup
 	destroy(): void {
 		this.isDestroyed = true
-		
+
 		if (this.reconnectTimer) {
 			clearTimeout(this.reconnectTimer)
 			this.reconnectTimer = null

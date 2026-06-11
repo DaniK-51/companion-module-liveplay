@@ -34,19 +34,19 @@ export type ActionsSchema = {
 		}
 	}
 	stop_all: {
-		options: {}
+		options: Record<string, never>
 	}
 	play: {
-		options: {}
+		options: Record<string, never>
 	}
 	pause: {
-		options: {}
+		options: Record<string, never>
 	}
 	next: {
-		options: {}
+		options: Record<string, never>
 	}
 	previous: {
-		options: {}
+		options: Record<string, never>
 	}
 	set_master_gain: {
 		options: {
@@ -208,6 +208,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					label: 'Position (seconds)',
 					default: 0,
 					min: 0,
+					max: 86400,
 				},
 			],
 			callback: async (event) => {

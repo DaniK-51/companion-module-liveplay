@@ -49,15 +49,13 @@ export interface LivePlayMeterData {
 
 export class LivePlayApiClient {
 	private config: ModuleConfig
-	private isDestroyed = false
-
 	constructor(config: ModuleConfig) {
 		this.config = config
 	}
 
 	private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
 		const url = `http://${this.config.host}:${this.config.port}${endpoint}`
-		
+
 		const controller = new AbortController()
 		const timeoutId = setTimeout(() => controller.abort(), this.config.connectionTimeout)
 
@@ -77,7 +75,7 @@ export class LivePlayApiClient {
 				throw new Error(`HTTP ${response.status}: ${response.statusText}`)
 			}
 
-			return await response.json()
+			return (await response.json()) as T
 		} catch (error) {
 			clearTimeout(timeoutId)
 			if (error instanceof Error && error.name === 'AbortError') {
@@ -92,7 +90,7 @@ export class LivePlayApiClient {
 		try {
 			await this.makeRequest('/api/health')
 			return true
-		} catch (error) {
+		} catch (_error) {
 			return false
 		}
 	}
@@ -289,6 +287,6 @@ export class LivePlayApiClient {
 
 	// Cleanup
 	destroy(): void {
-		this.isDestroyed = true
+		// Cleanup resources
 	}
 }

@@ -43,13 +43,13 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 		// Initialize API client
 		this.apiClient = new LivePlayApiClient(config)
-		
+
 		// Initialize WebSocket client
 		this.webSocketClient = new LivePlayWebSocket(config)
 		this.setupWebSocketHandlers()
 
 		// Start connection monitoring
-		this.startConnectionMonitoring()
+		void this.startConnectionMonitoring()
 
 		// Start update loop
 		this.startUpdateLoop()
@@ -122,8 +122,10 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		if (this.updateIntervalId) {
 			clearInterval(this.updateIntervalId)
 		}
-		
-		this.updateIntervalId = setInterval(checkConnection, 30000) // Check every 30 seconds
+
+		this.updateIntervalId = setInterval(() => {
+			void checkConnection()
+		}, 30000) // Check every 30 seconds
 	}
 
 	private startUpdateLoop(): void {
@@ -139,13 +141,13 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		if (this.updateIntervalId) {
 			clearInterval(this.updateIntervalId)
 		}
-		
+
 		this.updateIntervalId = setInterval(update, this.config.updateInterval)
 	}
 
 	private handleCueStateUpdate(data: any): void {
 		const { uuid, state } = data
-		
+
 		if (state === 'playing') {
 			this.playingCues.add(uuid)
 		} else {
@@ -169,7 +171,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		}
 	}
 
-	private handleMeterUpdate(data: any): void {
+	private handleMeterUpdate(_data: any): void {
 		// Handle meter data for future feedback implementations
 		if (this.config.debugLogging) {
 			this.log('debug', `Meter update received`)

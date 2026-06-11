@@ -1,25 +1,26 @@
+import { InstanceStatus } from '@companion-module/base'
 import type ModuleInstance from './main.js'
 
 export type FeedbacksSchema = {
 	is_playing: {
 		type: 'boolean'
-		options: {}
+		options: Record<string, never>
 	}
 	is_paused: {
 		type: 'boolean'
-		options: {}
+		options: Record<string, never>
 	}
 	is_stopped: {
 		type: 'boolean'
-		options: {}
+		options: Record<string, never>
 	}
 	connection_status: {
 		type: 'boolean'
-		options: {}
+		options: Record<string, never>
 	}
 	project_loaded: {
 		type: 'boolean'
-		options: {}
+		options: Record<string, never>
 	}
 	cue_is_playing: {
 		type: 'boolean'
@@ -182,9 +183,8 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					default: true,
 				},
 			],
-			callback: (feedback) => {
+			callback: (_feedback) => {
 				// Will be implemented when we have paused cue tracking
-				const options = feedback.options as any
 				return false // Placeholder until paused cue tracking is implemented
 			},
 		},
@@ -228,6 +228,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					label: 'Min Value (seconds)',
 					default: 0,
 					min: 0,
+					max: 86400,
 				},
 				{
 					id: 'maxValue',
@@ -235,6 +236,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					label: 'Max Value (seconds)',
 					default: 60,
 					min: 0,
+					max: 86400,
 				},
 			],
 			callback: (feedback) => {
@@ -257,6 +259,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					label: 'Min Value (seconds)',
 					default: 0,
 					min: 0,
+					max: 86400,
 				},
 				{
 					id: 'maxValue',
@@ -264,6 +267,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					label: 'Max Value (seconds)',
 					default: 300,
 					min: 0,
+					max: 86400,
 				},
 			],
 			callback: (feedback) => {
