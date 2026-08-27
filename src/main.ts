@@ -301,6 +301,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 		this.nextItemUuid = msg.next_item_uuid || null
 		this.masterGainDb = msg.master_gain_db
+		this.selectedItemUuid = msg.selected_item_uuid || null
 
 		this.recalculateState()
 
@@ -331,11 +332,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.cueMeters.clear()
 		for (const item of msg.items) {
 			this.cueMeters.set(item.cue_id, item.sources)
-		}
-
-		// Update selection from meters frame (if present)
-		if (msg.selected_item_uuid !== undefined) {
-			this.selectedItemUuid = msg.selected_item_uuid || null
 		}
 
 		if (this.config.debugLogging) {

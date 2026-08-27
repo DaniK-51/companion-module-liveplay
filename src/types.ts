@@ -217,6 +217,7 @@ export interface PlaybackSnapshotMessage {
 	next_item_uuid?: string
 	master_gain_db: number
 	output_channel_gains?: Array<{ channel: number; db: number }>
+	selected_item_uuid?: string
 	preview?: { item_uuid: string; cue_id: string }
 }
 
@@ -225,7 +226,6 @@ export interface MeterMessage {
 	items: MeterItem[]
 	mixer_channels: MixerMeter[]
 	master_channels: MasterMeter[]
-	selected_item_uuid?: string
 }
 
 export interface DocPatchMessage {
