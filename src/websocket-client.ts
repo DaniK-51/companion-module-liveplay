@@ -7,10 +7,19 @@ import type {
 	PlaybackSnapshotMessage,
 	MeterMessage,
 	DocPatchMessage,
+	SelectionMessage,
 } from './types.js'
 
 export { TransportState }
-export type { ServerMessage, ClientFrame, CueStateMessage, PlaybackSnapshotMessage, MeterMessage, DocPatchMessage }
+export type {
+	ServerMessage,
+	ClientFrame,
+	CueStateMessage,
+	PlaybackSnapshotMessage,
+	MeterMessage,
+	DocPatchMessage,
+	SelectionMessage,
+}
 
 export class LivePlayWebSocket {
 	private ws: WebSocket | null = null

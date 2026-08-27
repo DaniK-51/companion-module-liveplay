@@ -17,6 +17,7 @@ import type {
 	PlaybackSnapshotMessage,
 	MeterMessage,
 	DocPatchMessage,
+	SelectionMessage,
 } from './types.js'
 
 export type ModuleSchema = {
@@ -54,6 +55,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	cueStates = new Map<string, TransportState>() // cue_id → transport
 	cuePositions = new Map<string, number>() // cue_id → playhead_seconds
 	nextItemUuid: string | null = null
+	selectedItemUuid: string | null = null // last cue selected in LivePlay UI
 
 	// === Real-time Meters ===
 	cueMeters = new Map<string, MeterChannel[]>() // cue_id → source channels
@@ -261,6 +263,10 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.webSocketClient.onMessage('doc_patch', (message) => {
 			this.handleDocPatch(message as DocPatchMessage)
 		})
+
+		this.webSocketClient.onMessage('set_selection', (message) => {
+			this.handleSetSelection(message as SelectionMessage)
+		})
 	}
 
 	private handleCueState(msg: CueStateMessage): void {
@@ -330,6 +336,16 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		if (this.config.debugLogging) {
 			const masterPeak = this.masterMeters.get(0)?.peakDb ?? -Infinity
 			this.log('debug', `meters: master=${masterPeak.toFixed(1)}dB cues=${msg.items.length}`)
+		}
+	}
+
+	// === Selection Handler ===
+
+	private handleSetSelection(msg: SelectionMessage): void {
+		this.selectedItemUuid = msg.item_uuid || null
+
+		if (this.config.debugLogging) {
+			this.log('debug', `set_selection: ${msg.item_uuid}`)
 		}
 	}
 
@@ -718,6 +734,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.masterMeters.clear()
 		this.mixers.clear()
 		this.devices.clear()
+		this.selectedItemUuid = null
 	}
 
 	async configUpdated(config: ModuleConfig): Promise<void> {

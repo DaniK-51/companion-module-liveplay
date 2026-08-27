@@ -242,6 +242,11 @@ export interface ErrorMessage {
 	message: string
 }
 
+export interface SelectionMessage {
+	type: 'set_selection'
+	item_uuid: string
+}
+
 export type ServerMessage =
 	| CueStateMessage
 	| PlaybackSnapshotMessage
@@ -249,6 +254,7 @@ export type ServerMessage =
 	| DocPatchMessage
 	| PongMessage
 	| ErrorMessage
+	| SelectionMessage
 
 // --- Client → Server Frames ---
 
@@ -312,6 +318,11 @@ export interface PingFrame {
 	type: 'ping'
 }
 
+export interface SetSelectionFrame {
+	type: 'set_selection'
+	item_uuid: string
+}
+
 export type ClientFrame =
 	| PlayFrame
 	| StopFrame
@@ -323,6 +334,7 @@ export type ClientFrame =
 	| StopAllFrame
 	| SetNextItemFrame
 	| PingFrame
+	| SetSelectionFrame
 
 // --- REST API Response Types ---
 
