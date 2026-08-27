@@ -539,6 +539,39 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		})
 	}
 
+	/**
+	 * Find a project item by its index path.
+	 * Accepts comma or slash separated zero-based indices.
+	 * Examples: "5" = 6th top-level item, "1,11" = top-level[1].children[11]
+	 */
+	findItemByIndex(indexPath: string): ProjectItem | null {
+		const parts = indexPath
+			.replace(/\//g, ',')
+			.split(',')
+			.map((s) => parseInt(s.trim(), 10))
+
+		if (parts.some((n) => isNaN(n) || n < 0)) {
+			return null
+		}
+
+		let current = this.projectTree
+		let item: ProjectItem | null = null
+
+		for (const idx of parts) {
+			if (idx >= current.length) {
+				return null
+			}
+			item = current[idx]
+			if (item.children && item.type === 'group') {
+				current = item.children
+			} else {
+				current = []
+			}
+		}
+
+		return item
+	}
+
 	private handleCartSlotSet(msg: DocPatchMessage): void {
 		const slot = msg.slot as number
 		const itemUuid = msg.itemUuid as string

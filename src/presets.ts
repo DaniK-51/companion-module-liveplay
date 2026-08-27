@@ -43,8 +43,8 @@ export function UpdatePresets(self: ModuleInstance): void {
 					{
 						actionId: 'toggle_cue',
 						options: {
+							lookupMode: 'uuid',
 							cueId: '$(local:cue_id)',
-							useUuid: true,
 						},
 					},
 				],
@@ -55,8 +55,8 @@ export function UpdatePresets(self: ModuleInstance): void {
 			{
 				feedbackId: 'cue_is_playing',
 				options: {
+					lookupMode: 'uuid',
 					cueId: '$(local:cue_id)',
-					useUuid: true,
 				},
 				style: {
 					bgcolor: 0x00ff00,
