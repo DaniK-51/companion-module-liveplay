@@ -1,3 +1,4 @@
+import { TransportState } from './websocket-client.js'
 import type ModuleInstance from './main.js'
 
 export type ActionsSchema = {
@@ -20,6 +21,18 @@ export type ActionsSchema = {
 		}
 	}
 	resume_cue: {
+		options: {
+			cueId: string
+			useUuid: boolean
+		}
+	}
+	toggle_cue: {
+		options: {
+			cueId: string
+			useUuid: boolean
+		}
+	}
+	toggle_pause_cue: {
 		options: {
 			cueId: string
 			useUuid: boolean
@@ -67,6 +80,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
@@ -96,6 +110,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
@@ -125,6 +140,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
@@ -154,6 +170,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
@@ -175,6 +192,91 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 			},
 		},
+		toggle_cue: {
+			name: 'Toggle Play/Stop',
+			options: [
+				{
+					id: 'cueId',
+					type: 'textinput',
+					label: 'Cue ID or UUID',
+					default: '',
+					useVariables: true,
+				},
+				{
+					id: 'useUuid',
+					type: 'checkbox',
+					label: 'Use UUID (uncheck for engine cue_id)',
+					default: true,
+				},
+			],
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Toggle Cue: no cue ID provided')
+					return
+				}
+
+				const lookupKey = opts.useUuid ? (self.uuidToCueId.get(opts.cueId) ?? opts.cueId) : opts.cueId
+				const transport = self.cueStates.get(lookupKey)
+				const isPlaying = transport === TransportState.Playing || transport === TransportState.FadingOut
+
+				if (isPlaying) {
+					if (opts.useUuid) {
+						self.webSocketClient?.send({ type: 'stop', item_uuid: opts.cueId })
+					} else {
+						self.webSocketClient?.send({ type: 'stop', cue_id: opts.cueId })
+					}
+				} else {
+					if (opts.useUuid) {
+						self.webSocketClient?.send({ type: 'play', item_uuid: opts.cueId })
+					} else {
+						self.webSocketClient?.send({ type: 'play', cue_id: opts.cueId })
+					}
+				}
+			},
+		},
+		toggle_pause_cue: {
+			name: 'Toggle Pause/Resume',
+			options: [
+				{
+					id: 'cueId',
+					type: 'textinput',
+					label: 'Cue ID or UUID',
+					default: '',
+					useVariables: true,
+				},
+				{
+					id: 'useUuid',
+					type: 'checkbox',
+					label: 'Use UUID (uncheck for engine cue_id)',
+					default: true,
+				},
+			],
+			callback: (event) => {
+				const opts = event.options
+				if (!opts.cueId) {
+					self.log('warn', 'Toggle Pause: no cue ID provided')
+					return
+				}
+
+				const lookupKey = opts.useUuid ? (self.uuidToCueId.get(opts.cueId) ?? opts.cueId) : opts.cueId
+				const transport = self.cueStates.get(lookupKey)
+
+				if (transport === TransportState.Paused) {
+					if (opts.useUuid) {
+						self.webSocketClient?.send({ type: 'resume', item_uuid: opts.cueId })
+					} else {
+						self.webSocketClient?.send({ type: 'resume', cue_id: opts.cueId })
+					}
+				} else {
+					if (opts.useUuid) {
+						self.webSocketClient?.send({ type: 'pause', item_uuid: opts.cueId })
+					} else {
+						self.webSocketClient?.send({ type: 'pause', cue_id: opts.cueId })
+					}
+				}
+			},
+		},
 		seek_cue: {
 			name: 'Seek Cue',
 			options: [
@@ -183,6 +285,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
@@ -220,6 +323,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
@@ -257,6 +361,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',

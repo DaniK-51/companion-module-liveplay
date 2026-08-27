@@ -5,33 +5,65 @@ import type { CompanionPresetDefinitions, CompanionPresetSection } from '@compan
 export function UpdatePresets(self: ModuleInstance): void {
 	const structure: CompanionPresetSection[] = [
 		{
-			id: 'section1',
-			name: 'Section One',
+			id: 'playback',
+			name: 'Playback',
 			definitions: [
 				{
-					id: 'group1',
-					name: 'Group One',
-					description: 'A starting point for preset definitions!',
+					id: 'cue_controls',
+					name: 'Cue Controls',
+					description: 'Play/Stop toggle and transport controls',
 					type: 'simple',
-					presets: ['mylabel'],
+					presets: ['play_stop_cue'],
 				},
 			],
 		},
 	]
 
 	const presets: CompanionPresetDefinitions<ModuleSchema> = {}
-	presets['mylabel'] = {
+
+	presets['play_stop_cue'] = {
 		type: 'simple',
-		name: 'Name',
+		name: 'Play / Stop Cue',
 		style: {
-			text: 'My first Preset button',
+			text: 'Play',
 			size: 'auto',
 			color: 0xffffff,
 			bgcolor: 0x000000,
-			show_topbar: false,
 		},
-		steps: [],
-		feedbacks: [],
+		localVariables: [
+			{
+				variableName: 'cue_id',
+				variableType: 'simple',
+				startupValue: '',
+			},
+		],
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'toggle_cue',
+						options: {
+							cueId: '$(local:cue_id)',
+							useUuid: true,
+						},
+					},
+				],
+				up: [],
+			},
+		],
+		feedbacks: [
+			{
+				feedbackId: 'cue_is_playing',
+				options: {
+					cueId: '$(local:cue_id)',
+					useUuid: true,
+				},
+				style: {
+					bgcolor: 0x00ff00,
+					color: 0x000000,
+				},
+			},
+		],
 	}
 
 	self.setPresetDefinitions(structure, presets)

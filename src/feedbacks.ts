@@ -89,6 +89,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
@@ -117,6 +118,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
@@ -145,6 +147,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					type: 'textinput',
 					label: 'Cue ID or UUID',
 					default: '',
+					useVariables: true,
 				},
 				{
 					id: 'useUuid',
