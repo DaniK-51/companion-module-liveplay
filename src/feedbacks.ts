@@ -136,5 +136,21 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				return state === undefined || state === TransportState.Stopped
 			},
 		},
+		cue_ready_to_assign: {
+			name: 'Cue Ready to Assign',
+			type: 'boolean',
+			defaultStyle: {
+				bgcolor: 0x00ff00,
+				color: 0x000000,
+				text: 'Learn',
+			},
+			options: cueOptions(),
+			callback: (feedback) => {
+				const opts = feedback.options as unknown as CueLookupOptions
+				// Only show when cue is NOT assigned and there IS a selected cue
+				if (opts.cueId) return false
+				return self.selectedItemUuid !== null
+			},
+		},
 	} satisfies CompanionFeedbackDefinitions)
 }

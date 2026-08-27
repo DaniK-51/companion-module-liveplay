@@ -11,7 +11,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 				{
 					id: 'cue_controls',
 					name: 'Cue Controls',
-					description: 'Play/Stop toggle and transport controls',
+					description: 'Play/Stop toggle with learn-to-assign',
 					type: 'simple',
 					presets: ['play_stop_cue'],
 				},
@@ -23,9 +23,9 @@ export function UpdatePresets(self: ModuleInstance): void {
 
 	presets['play_stop_cue'] = {
 		type: 'simple',
-		name: 'Play / Stop Cue',
+		name: 'Play / Stop Cue (Learn)',
 		style: {
-			text: 'Play',
+			text: '',
 			size: 'auto',
 			color: 0xffffff,
 			bgcolor: 0x000000,
@@ -53,6 +53,18 @@ export function UpdatePresets(self: ModuleInstance): void {
 		],
 		feedbacks: [
 			{
+				feedbackId: 'cue_ready_to_assign',
+				options: {
+					lookupMode: 'uuid',
+					cueId: '$(local:cue_id)',
+				},
+				style: {
+					bgcolor: 0x00ff00,
+					color: 0x000000,
+					text: 'Learn',
+				},
+			},
+			{
 				feedbackId: 'cue_is_playing',
 				options: {
 					lookupMode: 'uuid',
@@ -60,6 +72,17 @@ export function UpdatePresets(self: ModuleInstance): void {
 				},
 				style: {
 					bgcolor: 0x00ff00,
+					color: 0x000000,
+				},
+			},
+			{
+				feedbackId: 'cue_is_paused',
+				options: {
+					lookupMode: 'uuid',
+					cueId: '$(local:cue_id)',
+				},
+				style: {
+					bgcolor: 0xffff00,
 					color: 0x000000,
 				},
 			},

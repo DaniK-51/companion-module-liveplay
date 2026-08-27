@@ -130,6 +130,13 @@ export function UpdateActions(self: ModuleInstance): void {
 
 				self.webSocketClient?.send({ type: isPlaying ? 'stop' : 'play', ...target })
 			},
+			learn: () => {
+				if (!self.selectedItemUuid) return undefined
+				return {
+					lookupMode: 'uuid' as const,
+					cueId: self.selectedItemUuid,
+				}
+			},
 		},
 		toggle_pause_cue: {
 			name: 'Toggle Pause/Resume',
