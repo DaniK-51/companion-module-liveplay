@@ -15,6 +15,7 @@ export type VariablesSchema = {
 	current_cue_duration: number
 	current_cue_duration_formatted: string
 	next_item_uuid: string
+	selected_item_uuid: string
 	master_peak_db: number
 	master_rms_db: number
 	master_gain_reduction_db: number
@@ -40,6 +41,7 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		current_cue_duration: { name: 'Current Cue Duration (seconds)' },
 		current_cue_duration_formatted: { name: 'Current Cue Duration (MM:SS)' },
 		next_item_uuid: { name: 'Next Item UUID' },
+		selected_item_uuid: { name: 'Selected Item UUID' },
 		master_peak_db: { name: 'Master Peak (dB)' },
 		master_rms_db: { name: 'Master RMS (dB)' },
 		master_gain_reduction_db: { name: 'Master Gain Reduction (dB)' },
@@ -101,6 +103,7 @@ export function UpdateVariables(self: ModuleInstance): void {
 		current_cue_duration: currentCueDuration,
 		current_cue_duration_formatted: formatTime(currentCueDuration),
 		next_item_uuid: self.nextItemUuid ?? '',
+		selected_item_uuid: self.selectedItemUuid ?? '',
 		master_peak_db: masterPeakDb,
 		master_rms_db: masterRmsDb,
 		master_gain_reduction_db: masterGainReductionDb,
