@@ -13,6 +13,8 @@ export type VariablesSchema = {
 	master_gain_reduction_db: number
 	mixer_peak_db: number
 	mixer_rms_db: number
+	project_name: string
+	project_item_count: number
 }
 
 export function UpdateVariableDefinitions(self: ModuleInstance): void {
@@ -29,6 +31,8 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		master_gain_reduction_db: { name: 'Master Gain Reduction (dB)' },
 		mixer_peak_db: { name: 'Mixer Peak (dB)' },
 		mixer_rms_db: { name: 'Mixer RMS (dB)' },
+		project_name: { name: 'Project Name' },
+		project_item_count: { name: 'Project Item Count' },
 	})
 }
 
@@ -41,6 +45,22 @@ export function UpdateVariables(self: ModuleInstance): void {
 	}
 
 	const state = self.currentPlayerState
+
+	// Get master meter values (default to channel 0)
+	const masterMeter = self.masterMeters.get(0)
+	const masterPeakDb = masterMeter?.peakDb ?? -Infinity
+	const masterRmsDb = masterMeter?.rmsDb ?? -Infinity
+	const masterGainReductionDb = masterMeter?.gainReductionDb ?? 0
+
+	// Get first mixer meter values
+	let mixerPeakDb = -Infinity
+	let mixerRmsDb = -Infinity
+	const firstMixer = self.mixerMeters.values().next().value
+	if (firstMixer) {
+		mixerPeakDb = firstMixer.peakDb
+		mixerRmsDb = firstMixer.rmsDb
+	}
+
 	self.setVariableValues({
 		player_state: state.state,
 		player_position: state.position,
@@ -49,10 +69,12 @@ export function UpdateVariables(self: ModuleInstance): void {
 		master_gain: state.masterGain,
 		active_cue_count: state.activeCueCount,
 		current_cue_id: state.currentCueId,
-		master_peak_db: self.masterPeakDb,
-		master_rms_db: self.masterRmsDb,
-		master_gain_reduction_db: self.masterGainReductionDb,
-		mixer_peak_db: self.mixerPeakDb,
-		mixer_rms_db: self.mixerRmsDb,
+		master_peak_db: masterPeakDb,
+		master_rms_db: masterRmsDb,
+		master_gain_reduction_db: masterGainReductionDb,
+		mixer_peak_db: mixerPeakDb,
+		mixer_rms_db: mixerRmsDb,
+		project_name: self.projectName,
+		project_item_count: self.projectItems.size,
 	})
 }
