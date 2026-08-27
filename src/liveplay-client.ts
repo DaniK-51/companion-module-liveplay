@@ -1,18 +1,12 @@
 import type { ModuleConfig } from './config.js'
-
-export interface LivePlayHealthResponse {
-	ok: boolean
-	name: string
-}
-
-export interface LivePlayProjectHeader {
-	name: string
-	itemCount: number
-	theme?: Record<string, unknown>
-	settings?: Record<string, unknown>
-	cart?: unknown[]
-	hasOpenProject?: boolean
-}
+import type {
+	LivePlayHealthResponse,
+	LivePlayProjectHeader,
+	LivePlayProject,
+	LivePlayCue,
+	LivePlayMixer,
+	LivePlayDevice,
+} from './types.js'
 
 export class LivePlayApiClient {
 	private config: ModuleConfig
@@ -67,6 +61,47 @@ export class LivePlayApiClient {
 			return await this.makeRequest<LivePlayProjectHeader>('/api/project/header')
 		} catch (_error) {
 			return null
+		}
+	}
+
+	async getProject(): Promise<LivePlayProject | null> {
+		try {
+			return await this.makeRequest<LivePlayProject>('/api/project')
+		} catch (_error) {
+			return null
+		}
+	}
+
+	async getCues(): Promise<LivePlayCue[]> {
+		try {
+			return await this.makeRequest<LivePlayCue[]>('/api/cues')
+		} catch (_error) {
+			return []
+		}
+	}
+
+	async getMixers(): Promise<LivePlayMixer[]> {
+		try {
+			return await this.makeRequest<LivePlayMixer[]>('/api/mixers')
+		} catch (_error) {
+			return []
+		}
+	}
+
+	async getDevices(): Promise<LivePlayDevice[]> {
+		try {
+			return await this.makeRequest<LivePlayDevice[]>('/api/devices')
+		} catch (_error) {
+			return []
+		}
+	}
+
+	async getMasterGain(): Promise<number> {
+		try {
+			const result = await this.makeRequest<{ db: number }>('/api/master/gain')
+			return result.db
+		} catch (_error) {
+			return 0
 		}
 	}
 
