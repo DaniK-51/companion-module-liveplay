@@ -8,6 +8,13 @@ export type VariablesSchema = {
 	master_gain: number
 	active_cue_count: number
 	current_cue_id: string
+	current_cue_uuid: string
+	current_cue_name: string
+	current_cue_artist: string
+	current_cue_title: string
+	current_cue_duration: number
+	current_cue_duration_formatted: string
+	next_item_uuid: string
 	master_peak_db: number
 	master_rms_db: number
 	master_gain_reduction_db: number
@@ -26,6 +33,13 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		master_gain: { name: 'Master Gain (dB)' },
 		active_cue_count: { name: 'Active Cue Count' },
 		current_cue_id: { name: 'Current Cue ID' },
+		current_cue_uuid: { name: 'Current Cue UUID' },
+		current_cue_name: { name: 'Current Cue Name' },
+		current_cue_artist: { name: 'Current Cue Artist' },
+		current_cue_title: { name: 'Current Cue Title' },
+		current_cue_duration: { name: 'Current Cue Duration (seconds)' },
+		current_cue_duration_formatted: { name: 'Current Cue Duration (MM:SS)' },
+		next_item_uuid: { name: 'Next Item UUID' },
 		master_peak_db: { name: 'Master Peak (dB)' },
 		master_rms_db: { name: 'Master RMS (dB)' },
 		master_gain_reduction_db: { name: 'Master Gain Reduction (dB)' },
@@ -45,6 +59,17 @@ export function UpdateVariables(self: ModuleInstance): void {
 	}
 
 	const state = self.currentPlayerState
+
+	// Get current cue metadata
+	const currentCueId = state.currentCueId
+	const currentUuid = currentCueId ? (self.cueIdToUuid.get(currentCueId) ?? '') : ''
+	const currentCue = currentCueId ? self.engineCues.get(currentCueId) : undefined
+	const currentItem = currentUuid ? self.projectItems.get(currentUuid) : undefined
+
+	const currentCueName = currentItem?.displayName ?? currentCue?.displayName ?? ''
+	const currentCueArtist = currentCue?.artist ?? ''
+	const currentCueTitle = currentCue?.title ?? ''
+	const currentCueDuration = currentCue?.durationSec ?? currentItem?.duration ?? 0
 
 	// Get master meter values (default to channel 0)
 	const masterMeter = self.masterMeters.get(0)
@@ -68,7 +93,14 @@ export function UpdateVariables(self: ModuleInstance): void {
 		player_progress: state.progress,
 		master_gain: state.masterGain,
 		active_cue_count: state.activeCueCount,
-		current_cue_id: state.currentCueId,
+		current_cue_id: currentCueId,
+		current_cue_uuid: currentUuid,
+		current_cue_name: currentCueName,
+		current_cue_artist: currentCueArtist,
+		current_cue_title: currentCueTitle,
+		current_cue_duration: currentCueDuration,
+		current_cue_duration_formatted: formatTime(currentCueDuration),
+		next_item_uuid: self.nextItemUuid ?? '',
 		master_peak_db: masterPeakDb,
 		master_rms_db: masterRmsDb,
 		master_gain_reduction_db: masterGainReductionDb,
