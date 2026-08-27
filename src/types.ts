@@ -225,6 +225,7 @@ export interface MeterMessage {
 	items: MeterItem[]
 	mixer_channels: MixerMeter[]
 	master_channels: MasterMeter[]
+	selected_item_uuid?: string
 }
 
 export interface DocPatchMessage {

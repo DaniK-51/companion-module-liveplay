@@ -333,6 +333,11 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			this.cueMeters.set(item.cue_id, item.sources)
 		}
 
+		// Update selection from meters frame (if present)
+		if (msg.selected_item_uuid !== undefined) {
+			this.selectedItemUuid = msg.selected_item_uuid || null
+		}
+
 		if (this.config.debugLogging) {
 			const masterPeak = this.masterMeters.get(0)?.peakDb ?? -Infinity
 			this.log('debug', `meters: master=${masterPeak.toFixed(1)}dB cues=${msg.items.length}`)
@@ -397,6 +402,13 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 			case 'next_item_set':
 				this.nextItemUuid = (msg.itemUuid as string) || null
+				break
+
+			case 'selection_changed':
+				this.selectedItemUuid = (msg.itemUuid as string) || null
+				if (this.config.debugLogging) {
+					this.log('debug', `selection_changed: ${this.selectedItemUuid}`)
+				}
 				break
 
 			case 'preview_started':
