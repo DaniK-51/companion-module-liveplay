@@ -91,22 +91,38 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.webSocketClient = new LivePlayWebSocket(config)
 		this.webSocketClient.setLogger((level, message) => this.log(level, message))
 		this.setupWebSocketHandlers()
-		this.webSocketClient.connect()
-
-		void this.startConnectionMonitoring()
-
-		// Load project state after a short delay to allow WS connection
-		setTimeout(() => {
-			void this.loadProjectState()
-		}, 1000)
-
-		this.startUpdateLoop()
 
 		this.updateStatus(InstanceStatus.Connecting)
 		this.updateActions()
 		this.updateFeedbacks()
 		this.updatePresets()
 		this.updateVariableDefinitions()
+
+		this.startUpdateLoop()
+
+		// Wait for health check before connecting WebSocket
+		void this.connectWithHealthCheck()
+
+		void this.startConnectionMonitoring()
+	}
+
+	private async connectWithHealthCheck(): Promise<void> {
+		if (!this.apiClient) return
+
+		this.log('info', 'Checking server health...')
+		const isHealthy = await this.apiClient.checkHealth()
+
+		if (isHealthy) {
+			this.log('info', 'Server is healthy, connecting WebSocket...')
+			this.webSocketClient?.connect()
+			// Load project state after WS connects
+			setTimeout(() => {
+				void this.loadProjectState()
+			}, 500)
+		} else {
+			this.log('warn', 'Server not healthy, will retry via connection monitor')
+			this.updateStatus(InstanceStatus.ConnectionFailure)
+		}
 	}
 
 	// === Project State Loading ===
