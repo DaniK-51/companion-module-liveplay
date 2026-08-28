@@ -97,7 +97,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		],
 	}
 
-	// Preset 2: Assign & Toggle (new - uses custom variables)
+	// Preset 2: Assign & Toggle (uses internal Local Variable: Set value action)
 	presets['assign_and_toggle'] = {
 		type: 'simple',
 		name: 'Assign & Toggle',
@@ -109,26 +109,29 @@ export function UpdatePresets(self: ModuleInstance): void {
 		},
 		localVariables: [
 			{
-				variableName: 'slot',
+				variableName: 'cue_id',
 				variableType: 'simple',
-				startupValue: '1',
-				headline: 'Slot number (1-99). Each button needs a unique slot.',
+				startupValue: '',
 			},
 		],
 		steps: [
 			{
 				down: [
+					// Internal action: write selected_item_uuid to $(local:cue_id)
 					{
-						actionId: 'assign_selected',
+						actionId: 'set_variable_value',
 						options: {
-							variableName: 'liveplay_slot_$(local:slot)',
+							location: '$(this:page)/$(this:row)/$(this:column)',
+							variable: 'cue_id',
+							value: '$(liveplay:selected_item_uuid)',
 						},
 					},
+					// Then toggle that cue
 					{
 						actionId: 'toggle_cue',
 						options: {
 							lookupMode: 'uuid',
-							cueId: '$(custom:liveplay_slot_$(local:slot))',
+							cueId: '$(local:cue_id)',
 						},
 					},
 				],
@@ -140,7 +143,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 				feedbackId: 'cue_ready_to_assign',
 				options: {
 					lookupMode: 'uuid',
-					cueId: '$(custom:liveplay_slot_$(local:slot))',
+					cueId: '$(local:cue_id)',
 				},
 				style: {
 					bgcolor: 0x00ff00,
@@ -152,7 +155,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 				feedbackId: 'cue_is_playing',
 				options: {
 					lookupMode: 'uuid',
-					cueId: '$(custom:liveplay_slot_$(local:slot))',
+					cueId: '$(local:cue_id)',
 				},
 				style: {
 					bgcolor: 0x00ff00,
@@ -163,7 +166,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 				feedbackId: 'cue_is_paused',
 				options: {
 					lookupMode: 'uuid',
-					cueId: '$(custom:liveplay_slot_$(local:slot))',
+					cueId: '$(local:cue_id)',
 				},
 				style: {
 					bgcolor: 0xffff00,
