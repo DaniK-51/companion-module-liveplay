@@ -236,6 +236,31 @@ export function UpdateActions(self: ModuleInstance): void {
 				self.webSocketClient?.send({ type: 'fade', ...target, in_ms: opts.inMs, out_ms: opts.outMs })
 			},
 		},
+		assign_selected: {
+			name: 'Assign Selected Cue',
+			description: 'Writes the currently selected cue UUID to a custom variable',
+			options: [
+				{
+					id: 'variableName',
+					type: 'custom-variable',
+					label: 'Save UUID to Custom Variable',
+				},
+			],
+			callback: (event, context) => {
+				const varName = event.options.variableName as string
+				if (!varName) {
+					self.log('warn', 'Assign Selected: no variable name provided')
+					return
+				}
+				const selectedUuid = self.state.selectedItemUuid
+				if (!selectedUuid) {
+					self.log('warn', 'Assign Selected: no item selected in LivePlay')
+					return
+				}
+				context.setCustomVariableValue(varName, selectedUuid)
+				self.log('info', `Assigned selected cue ${selectedUuid} to variable ${varName}`)
+			},
+		},
 		stop_all: {
 			name: 'Stop All',
 			options: [],
