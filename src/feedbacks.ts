@@ -15,14 +15,14 @@ function resolveToCueId(self: ModuleInstance, opts: CueLookupOptions): string | 
 
 	switch (opts.lookupMode) {
 		case 'uuid':
-			return self.uuidToCueId.get(opts.cueId) ?? opts.cueId
+			return self.state.uuidToCueId.get(opts.cueId) ?? opts.cueId
 		case 'cue_id':
 			return opts.cueId
 		case 'index': {
-			const item = self.findItemByIndex(opts.cueId)
+			const item = self.state.findItemByIndex(opts.cueId)
 			if (!item) return null
 			if (item.cueId) return item.cueId
-			return self.uuidToCueId.get(item.uuid) ?? null
+			return self.state.uuidToCueId.get(item.uuid) ?? null
 		}
 	}
 }
@@ -75,7 +75,8 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return self.cueStates.size > 0 && Array.from(self.cueStates.values()).some((t) => t === TransportState.Playing)
+				const states = self.state.cueStates
+				return states.size > 0 && Array.from(states.values()).some((t) => t === TransportState.Playing)
 			},
 		},
 		any_cue_paused: {
@@ -87,7 +88,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return Array.from(self.cueStates.values()).some((t) => t === TransportState.Paused)
+				return Array.from(self.state.cueStates.values()).some((t) => t === TransportState.Paused)
 			},
 		},
 		cue_is_playing: {
@@ -102,7 +103,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const opts = feedback.options as unknown as CueLookupOptions
 				const cueId = resolveToCueId(self, opts)
 				if (!cueId) return false
-				return self.cueStates.get(cueId) === TransportState.Playing
+				return self.state.cueStates.get(cueId) === TransportState.Playing
 			},
 		},
 		cue_is_paused: {
@@ -117,7 +118,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const opts = feedback.options as unknown as CueLookupOptions
 				const cueId = resolveToCueId(self, opts)
 				if (!cueId) return false
-				return self.cueStates.get(cueId) === TransportState.Paused
+				return self.state.cueStates.get(cueId) === TransportState.Paused
 			},
 		},
 		cue_is_stopped: {
@@ -132,7 +133,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const opts = feedback.options as unknown as CueLookupOptions
 				const cueId = resolveToCueId(self, opts)
 				if (!cueId) return true
-				const state = self.cueStates.get(cueId)
+				const state = self.state.cueStates.get(cueId)
 				return state === undefined || state === TransportState.Stopped
 			},
 		},
@@ -147,9 +148,8 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			options: cueOptions(),
 			callback: (feedback) => {
 				const opts = feedback.options as unknown as CueLookupOptions
-				// Only show when cue is NOT assigned and there IS a selected cue
 				if (opts.cueId) return false
-				return self.selectedItemUuid !== null
+				return self.state.selectedItemUuid !== null
 			},
 		},
 	} satisfies CompanionFeedbackDefinitions)

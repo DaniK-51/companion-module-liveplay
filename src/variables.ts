@@ -60,13 +60,14 @@ export function UpdateVariables(self: ModuleInstance): void {
 		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 	}
 
-	const state = self.currentPlayerState
+	const s = self.state
+	const playerState = s.currentPlayerState
 
 	// Get current cue metadata
-	const currentCueId = state.currentCueId
-	const currentUuid = currentCueId ? (self.cueIdToUuid.get(currentCueId) ?? '') : ''
-	const currentCue = currentCueId ? self.engineCues.get(currentCueId) : undefined
-	const currentItem = currentUuid ? self.projectItems.get(currentUuid) : undefined
+	const currentCueId = playerState.currentCueId
+	const currentUuid = currentCueId ? (s.cueIdToUuid.get(currentCueId) ?? '') : ''
+	const currentCue = currentCueId ? s.engineCues.get(currentCueId) : undefined
+	const currentItem = currentUuid ? s.projectItems.get(currentUuid) : undefined
 
 	const currentCueName = currentItem?.displayName ?? currentCue?.displayName ?? ''
 	const currentCueArtist = currentCue?.artist ?? ''
@@ -74,7 +75,7 @@ export function UpdateVariables(self: ModuleInstance): void {
 	const currentCueDuration = currentCue?.durationSec ?? currentItem?.duration ?? 0
 
 	// Get master meter values (default to channel 0)
-	const masterMeter = self.masterMeters.get(0)
+	const masterMeter = s.masterMeters.get(0)
 	const masterPeakDb = masterMeter?.peakDb ?? -Infinity
 	const masterRmsDb = masterMeter?.rmsDb ?? -Infinity
 	const masterGainReductionDb = masterMeter?.gainReductionDb ?? 0
@@ -82,19 +83,19 @@ export function UpdateVariables(self: ModuleInstance): void {
 	// Get first mixer meter values
 	let mixerPeakDb = -Infinity
 	let mixerRmsDb = -Infinity
-	const firstMixer = self.mixerMeters.values().next().value
+	const firstMixer = s.mixerMeters.values().next().value
 	if (firstMixer) {
 		mixerPeakDb = firstMixer.peakDb
 		mixerRmsDb = firstMixer.rmsDb
 	}
 
 	self.setVariableValues({
-		player_state: state.state,
-		player_position: state.position,
-		player_position_formatted: formatTime(state.position),
-		player_progress: state.progress,
-		master_gain: state.masterGain,
-		active_cue_count: state.activeCueCount,
+		player_state: playerState.state,
+		player_position: playerState.position,
+		player_position_formatted: formatTime(playerState.position),
+		player_progress: playerState.progress,
+		master_gain: playerState.masterGain,
+		active_cue_count: playerState.activeCueCount,
 		current_cue_id: currentCueId,
 		current_cue_uuid: currentUuid,
 		current_cue_name: currentCueName,
@@ -102,14 +103,14 @@ export function UpdateVariables(self: ModuleInstance): void {
 		current_cue_title: currentCueTitle,
 		current_cue_duration: currentCueDuration,
 		current_cue_duration_formatted: formatTime(currentCueDuration),
-		next_item_uuid: self.nextItemUuid ?? '',
-		selected_item_uuid: self.selectedItemUuid ?? '',
+		next_item_uuid: s.nextItemUuid ?? '',
+		selected_item_uuid: s.selectedItemUuid ?? '',
 		master_peak_db: masterPeakDb,
 		master_rms_db: masterRmsDb,
 		master_gain_reduction_db: masterGainReductionDb,
 		mixer_peak_db: mixerPeakDb,
 		mixer_rms_db: mixerRmsDb,
-		project_name: self.projectName,
-		project_item_count: self.projectItems.size,
+		project_name: s.projectName,
+		project_item_count: s.projectItems.size,
 	})
 }

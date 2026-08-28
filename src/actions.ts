@@ -22,7 +22,7 @@ function resolveCue(self: ModuleInstance, opts: CueLookupOptions): { item_uuid?:
 		case 'cue_id':
 			return { cue_id: opts.cueId }
 		case 'index': {
-			const item = self.findItemByIndex(opts.cueId)
+			const item = self.state.findItemByIndex(opts.cueId)
 			if (!item) {
 				self.log('warn', `No item found at index path: ${opts.cueId}`)
 				return null
@@ -37,14 +37,14 @@ function resolveToCueId(self: ModuleInstance, opts: CueLookupOptions): string | 
 
 	switch (opts.lookupMode) {
 		case 'uuid':
-			return self.uuidToCueId.get(opts.cueId) ?? opts.cueId
+			return self.state.uuidToCueId.get(opts.cueId) ?? opts.cueId
 		case 'cue_id':
 			return opts.cueId
 		case 'index': {
-			const item = self.findItemByIndex(opts.cueId)
+			const item = self.state.findItemByIndex(opts.cueId)
 			if (!item) return null
 			if (item.cueId) return item.cueId
-			return self.uuidToCueId.get(item.uuid) ?? null
+			return self.state.uuidToCueId.get(item.uuid) ?? null
 		}
 	}
 }
@@ -125,16 +125,16 @@ export function UpdateActions(self: ModuleInstance): void {
 				if (!target) return
 
 				const cueId = resolveToCueId(self, opts)
-				const transport = cueId ? self.cueStates.get(cueId) : undefined
+				const transport = cueId ? self.state.cueStates.get(cueId) : undefined
 				const isPlaying = transport === TransportState.Playing || transport === TransportState.FadingOut
 
 				self.webSocketClient?.send({ type: isPlaying ? 'stop' : 'play', ...target })
 			},
 			learn: () => {
-				if (!self.selectedItemUuid) return undefined
+				if (!self.state.selectedItemUuid) return undefined
 				return {
 					lookupMode: 'uuid' as const,
-					cueId: self.selectedItemUuid,
+					cueId: self.state.selectedItemUuid,
 				}
 			},
 		},
@@ -147,7 +147,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				if (!target) return
 
 				const cueId = resolveToCueId(self, opts)
-				const transport = cueId ? self.cueStates.get(cueId) : undefined
+				const transport = cueId ? self.state.cueStates.get(cueId) : undefined
 
 				self.webSocketClient?.send({ type: transport === TransportState.Paused ? 'resume' : 'pause', ...target })
 			},
