@@ -696,7 +696,15 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	private startUpdateLoop(): void {
 		const update = () => {
 			UpdateVariables(this)
-			this.updateFeedbacks()
+			this.checkFeedbacks(
+				'connection_status',
+				'any_cue_playing',
+				'any_cue_paused',
+				'cue_is_playing',
+				'cue_is_paused',
+				'cue_is_stopped',
+				'cue_ready_to_assign',
+			)
 		}
 
 		update()
