@@ -3,7 +3,7 @@ import { InstanceStatus } from '@companion-module/base'
 import type ModuleInstance from './main.js'
 import { TransportState } from './websocket-client.js'
 
-type LookupMode = 'uuid' | 'cue_id' | 'index'
+type LookupMode = 'uuid' | 'cue_id' | 'index' | 'selected'
 
 interface CueLookupOptions extends CompanionOptionValues {
 	lookupMode: LookupMode
@@ -11,18 +11,24 @@ interface CueLookupOptions extends CompanionOptionValues {
 }
 
 function resolveToCueId(self: ModuleInstance, opts: CueLookupOptions): string | null {
-	if (!opts.cueId) return null
-
 	switch (opts.lookupMode) {
 		case 'uuid':
+			if (!opts.cueId) return null
 			return self.state.uuidToCueId.get(opts.cueId) ?? opts.cueId
 		case 'cue_id':
+			if (!opts.cueId) return null
 			return opts.cueId
 		case 'index': {
+			if (!opts.cueId) return null
 			const item = self.state.findItemByIndex(opts.cueId)
 			if (!item) return null
 			if (item.cueId) return item.cueId
 			return self.state.uuidToCueId.get(item.uuid) ?? null
+		}
+		case 'selected': {
+			const uuid = self.state.selectedItemUuid
+			if (!uuid) return null
+			return self.state.uuidToCueId.get(uuid) ?? null
 		}
 	}
 }
@@ -38,12 +44,13 @@ function cueOptions() {
 				{ id: 'uuid', label: 'By UUID' },
 				{ id: 'cue_id', label: 'By Engine Cue ID' },
 				{ id: 'index', label: 'By Index (e.g. 0, 1,3)' },
+				{ id: 'selected', label: 'Selected in LivePlay' },
 			],
 		},
 		{
 			id: 'cueId',
 			type: 'textinput' as const,
-			label: 'Cue ID / UUID / Index',
+			label: 'Cue ID / UUID / Index (not needed for Selected mode)',
 			default: '',
 			useVariables: true,
 		},

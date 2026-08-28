@@ -6,7 +6,7 @@ import type {
 import { TransportState } from './websocket-client.js'
 import type ModuleInstance from './main.js'
 
-type LookupMode = 'uuid' | 'cue_id' | 'index'
+type LookupMode = 'uuid' | 'cue_id' | 'index' | 'selected'
 
 interface CueLookupOptions extends CompanionOptionValues {
 	lookupMode: LookupMode
@@ -14,14 +14,15 @@ interface CueLookupOptions extends CompanionOptionValues {
 }
 
 function resolveCue(self: ModuleInstance, opts: CueLookupOptions): { item_uuid?: string; cue_id?: string } | null {
-	if (!opts.cueId) return null
-
 	switch (opts.lookupMode) {
 		case 'uuid':
+			if (!opts.cueId) return null
 			return { item_uuid: opts.cueId }
 		case 'cue_id':
+			if (!opts.cueId) return null
 			return { cue_id: opts.cueId }
 		case 'index': {
+			if (!opts.cueId) return null
 			const item = self.state.findItemByIndex(opts.cueId)
 			if (!item) {
 				self.log('warn', `No item found at index path: ${opts.cueId}`)
@@ -29,22 +30,36 @@ function resolveCue(self: ModuleInstance, opts: CueLookupOptions): { item_uuid?:
 			}
 			return { item_uuid: item.uuid }
 		}
+		case 'selected': {
+			const uuid = self.state.selectedItemUuid
+			if (!uuid) {
+				self.log('warn', 'No item selected in LivePlay')
+				return null
+			}
+			return { item_uuid: uuid }
+		}
 	}
 }
 
 function resolveToCueId(self: ModuleInstance, opts: CueLookupOptions): string | null {
-	if (!opts.cueId) return null
-
 	switch (opts.lookupMode) {
 		case 'uuid':
+			if (!opts.cueId) return null
 			return self.state.uuidToCueId.get(opts.cueId) ?? opts.cueId
 		case 'cue_id':
+			if (!opts.cueId) return null
 			return opts.cueId
 		case 'index': {
+			if (!opts.cueId) return null
 			const item = self.state.findItemByIndex(opts.cueId)
 			if (!item) return null
 			if (item.cueId) return item.cueId
 			return self.state.uuidToCueId.get(item.uuid) ?? null
+		}
+		case 'selected': {
+			const uuid = self.state.selectedItemUuid
+			if (!uuid) return null
+			return self.state.uuidToCueId.get(uuid) ?? null
 		}
 	}
 }
@@ -60,12 +75,13 @@ function cueOptions(): SomeCompanionActionInputField[] {
 				{ id: 'uuid', label: 'By UUID' },
 				{ id: 'cue_id', label: 'By Engine Cue ID' },
 				{ id: 'index', label: 'By Index (e.g. 0, 1,3)' },
+				{ id: 'selected', label: 'Selected in LivePlay' },
 			],
 		},
 		{
 			id: 'cueId',
 			type: 'textinput',
-			label: 'Cue ID / UUID / Index',
+			label: 'Cue ID / UUID / Index (not needed for Selected mode)',
 			default: '',
 			useVariables: true,
 		},
