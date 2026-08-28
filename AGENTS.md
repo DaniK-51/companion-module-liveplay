@@ -1,436 +1,272 @@
 # AI Agent Guide for LivePlay Companion Module Development
 
-## Basic Rules for AI Development
+## Critical Pitfalls (Lessons Learned)
 
-### 1. Code Quality Standards
+### 1. NEVER Re-register Feedback/Action/Variable Definitions in Update Loop
 
-- **TypeScript Required**: Use TypeScript for all module development
-- **Type Safety**: Define proper interfaces and types for all data structures
-- **Error Handling**: Implement comprehensive error handling with proper logging
-- **Async/Await**: Use async/await for all asynchronous operations
-- **Clean Code**: Follow consistent formatting and naming conventions
-
-### 2. Companion Module Architecture
-
-- **Instance Pattern**: Extend `InstanceBase<ModuleSchema>` for the main module class
-- **Configuration**: Use `SomeCompanionConfigField[]` for configuration options
-- **Actions**: Define actions with proper options and callback functions
-- **Feedbacks**: Create boolean feedbacks with appropriate styling
-- **Variables**: Expose variables for real-time data updates
-
-### 3. API Integration Best Practices
-
-- **Connection Management**: Implement proper connection handling with retries
-- **WebSocket Handling**: Use proper WebSocket connection lifecycle management
-- **Rate Limiting**: Implement appropriate rate limiting for API calls
-- **Caching**: Cache frequently accessed data to reduce API calls
-- **State Synchronization**: Keep local state synchronized with server state
-
-### 4. Performance Considerations
-
-- **Debouncing**: Debounce rapid updates to prevent performance issues
-- **Memory Management**: Clean up resources properly in destroy() method
-- **Update Frequency**: Limit update frequency for real-time data
-- **Batch Operations**: Group multiple operations when possible
-
-## Specific Rules for LivePlay Companion Module
-
-### 1. LivePlay API Integration
+**WRONG** — causes infinite loop and Companion UI freeze:
 
 ```typescript
-// Always use proper typing for LivePlay API responses
-interface LivePlayCue {
-	id: string
-	display_name: string
-	file_path: string
-	artist: string
-	title: string
-	duration_sec: number
-	gain_db: number
-	transport: number // 0=Stopped, 1=Playing, 2=FadingOut, 3=Paused
-}
-
-// Implement proper error handling for API calls
-async function loadCue(cueId: string): Promise<LivePlayCue | null> {
-	try {
-		const response = await fetch(`http://${this.config.host}:${this.config.port}/api/cues/${cueId}`)
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-		}
-		return await response.json()
-	} catch (error) {
-		this.log('error', `Failed to load cue ${cueId}: ${error.message}`)
-		return null
-	}
+private startUpdateLoop(): void {
+    const update = () => {
+        UpdateVariables(this)
+        this.updateFeedbacks()  // ❌ re-registers definitions every 100ms
+    }
+    this.updateIntervalId = setInterval(update, this.config.updateInterval)
 }
 ```
 
-### 2. WebSocket Connection Management
+**CORRECT** — register definitions once in `init()`, use `checkFeedbacks()` in update loop:
 
 ```typescript
-// Implement proper WebSocket lifecycle
-class LivePlayWebSocket {
-	private ws: WebSocket | null = null
-	private reconnectAttempts = 0
-	private maxReconnectAttempts = 5
-	private reconnectDelay = 1000
+async init(config: ModuleConfig): Promise<void> {
+    // Register definitions ONCE
+    this.updateActions()
+    this.updateFeedbacks()
+    this.updatePresets()
+    this.updateVariableDefinitions()
 
-	constructor(private instance: ModuleInstance) {}
+    this.startUpdateLoop()
+}
 
-	connect() {
-		this.ws = new WebSocket(`ws://${this.instance.config.host}:${this.instance.config.port}/ws`)
-
-		this.ws.onopen = () => {
-			this.instance.log('info', 'WebSocket connected')
-			this.reconnectAttempts = 0
-		}
-
-		this.ws.onmessage = (event) => {
-			this.handleMessage(event.data)
-		}
-
-		this.ws.onclose = () => {
-			this.instance.log('warn', 'WebSocket disconnected')
-			this.reconnect()
-		}
-
-		this.ws.onerror = (error) => {
-			this.instance.log('error', 'WebSocket error')
-		}
-	}
-
-	private reconnect() {
-		if (this.reconnectAttempts < this.maxReconnectAttempts) {
-			this.reconnectAttempts++
-			setTimeout(() => this.connect(), this.reconnectDelay * this.reconnectAttempts)
-		}
-	}
+private startUpdateLoop(): void {
+    const update = () => {
+        UpdateVariables(this)
+        this.checkFeedbacks('feedback_type_1', 'feedback_type_2')  // ✅ re-evaluate only
+    }
+    this.updateIntervalId = setInterval(update, this.config.updateInterval)
 }
 ```
 
-### 3. Action Implementation Pattern
+### 2. Health Check Before WebSocket Connection
+
+**WRONG** — shows "Ok" before actually connecting:
 
 ```typescript
-// Always use proper typing for action options
-interface PlayCueActionOptions {
-	cueId: string
-	useUuid: boolean
-	fadeTime: number
-}
-
-export function updateActions(self: ModuleInstance): void {
-	self.setActionDefinitions({
-		play_cue: {
-			name: 'Play Cue',
-			options: [
-				{
-					id: 'cueId',
-					type: 'textinput',
-					label: 'Cue ID',
-					default: '',
-				},
-				{
-					id: 'useUuid',
-					type: 'checkbox',
-					label: 'Use UUID instead of Cue ID',
-					default: true,
-				},
-				{
-					id: 'fadeTime',
-					type: 'number',
-					label: 'Fade Time (ms)',
-					default: 0,
-					min: 0,
-					max: 10000,
-				},
-			],
-			callback: async (event) => {
-				try {
-					const options = event.options as PlayCueActionOptions
-					const endpoint = options.useUuid ? 'item_uuid' : 'cue_id'
-					await fetch(`http://${self.config.host}:${self.config.port}/api/project/items/${options.cueId}/play`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							fade_ms: options.fadeTime,
-						}),
-					})
-				} catch (error) {
-					self.log('error', `Failed to play cue: ${error.message}`)
-				}
-			},
-		},
-	})
+async init(config: ModuleConfig): Promise<void> {
+    this.webSocketClient.connect()
+    this.updateStatus(InstanceStatus.Ok)  // ❌ premature
 }
 ```
 
-### 4. Feedback Implementation Pattern
+**CORRECT** — check health first, then connect:
 
 ```typescript
-// Always use proper typing for feedback options
-interface CueFeedbackOptions {
-	cueId: string
-	useUuid: boolean
+async init(config: ModuleConfig): Promise<void> {
+    this.updateStatus(InstanceStatus.Connecting)
+    void this.connectWithHealthCheck()
 }
 
-export function updateFeedbacks(self: ModuleInstance): void {
-	self.setFeedbackDefinitions({
-		cue_is_playing: {
-			name: 'Cue Is Playing',
-			type: 'boolean',
-			defaultStyle: {
-				bgcolor: 0x00ff00,
-				color: 0x000000,
-			},
-			options: [
-				{
-					id: 'cueId',
-					type: 'textinput',
-					label: 'Cue ID',
-					default: '',
-				},
-				{
-					id: 'useUuid',
-					type: 'checkbox',
-					label: 'Use UUID instead of Cue ID',
-					default: true,
-				},
-			],
-			callback: (feedback) => {
-				const options = feedback.options as CueFeedbackOptions
-				// Check if cue is currently playing
-				return self.playingCues.has(options.cueId)
-			},
-		},
-	})
+private async connectWithHealthCheck(): Promise<void> {
+    const isHealthy = await this.apiClient.checkHealth()
+    if (isHealthy) {
+        this.webSocketClient.connect()
+    } else {
+        this.updateStatus(InstanceStatus.ConnectionFailure)
+    }
 }
 ```
 
-### 5. Variable Implementation Pattern
+### 3. WebSocket Client Must Match LivePlay Frontend Pattern
+
+- Check `readyState === OPEN || CONNECTING` before creating new connection
+- Use exponential backoff (1.5s → 3s → 6s → 10s max)
+- Clear handlers on intentional disconnect to prevent reconnect
+- Log connection URL for debugging
+
+### 4. `checkFeedbacks()` Requires At Least One Argument
 
 ```typescript
-// Always use proper typing for variables
-interface PlayerVariables {
-	state: string
-	position: number
-	duration: number
-	progress: number
-}
+// ❌ Wrong — TypeScript error
+this.checkFeedbacks()
 
-export function updateVariableDefinitions(self: ModuleInstance): void {
-	self.setVariableDefinitions({
-		player_state: {
-			name: 'Player State',
-		},
-		player_position: {
-			name: 'Player Position (seconds)',
-		},
-		player_duration: {
-			name: 'Player Duration (seconds)',
-		},
-		player_progress: {
-			name: 'Player Progress (%)',
-		},
-	})
-}
-
-export function updateVariables(self: ModuleInstance): void {
-	const state = self.playerState
-	self.setVariableValues({
-		player_state: state.state,
-		player_position: state.position,
-		player_duration: state.duration,
-		player_progress: state.progress,
-	})
-}
+// ✅ Correct — pass all feedback type IDs
+this.checkFeedbacks(
+	'connection_status',
+	'any_cue_playing',
+	'cue_is_playing',
+	// ...
+)
 ```
 
-### 6. Configuration Pattern
+### 5. `pkg/` Directory Permission Issues on Windows/WSL
+
+If `yarn package` fails with `EACCES: permission denied, rmdir 'pkg/liveplay'`:
+
+```bash
+cmd.exe /c "rmdir /s /q C:\\Users\\DaniK\\companion_modules\\companion-module-liveplay\\pkg\\liveplay"
+yarn package
+```
+
+## Project Architecture
+
+### State Management
+
+The module maintains several Maps for O(1) lookup:
+
+| Map            | Key       | Value          | Purpose                           |
+| -------------- | --------- | -------------- | --------------------------------- |
+| `projectItems` | uuid      | ProjectItem    | Flat lookup for all project items |
+| `engineCues`   | cue_id    | EngineCue      | Engine-level cue metadata         |
+| `uuidToCueId`  | item_uuid | cue_id         | Cross-reference: project → engine |
+| `cueIdToUuid`  | cue_id    | item_uuid      | Cross-reference: engine → project |
+| `cueStates`    | cue_id    | TransportState | Real-time transport state         |
+| `cuePositions` | cue_id    | number         | Real-time playhead position       |
+
+### Data Flow
+
+```
+LivePlay Server
+    ├── WebSocket (ws://host:4480/ws)
+    │   ├── playback_snapshot (on connect) → updates all Maps
+    │   ├── cue_state (on transport change) → updates cueStates/cuePositions
+    │   ├── meters (~60Hz) → updates meter Maps
+    │   ├── doc_patch (on mutation) → incremental state updates
+    │   └── set_selection (on UI click) → updates selectedItemUuid
+    │
+    └── REST API (http://host:4480)
+        ├── GET /api/health → connection check
+        ├── GET /api/project → full project document
+        ├── GET /api/cues → engine cue list
+        ├── GET /api/mixers → mixer channels
+        └── GET /api/devices → audio devices
+```
+
+### doc_patch Operations
+
+| Op                    | Fields                        | Action                                |
+| --------------------- | ----------------------------- | ------------------------------------- |
+| `project_changed`     | (none)                        | Full reload via `loadProjectState()`  |
+| `item_added`          | uuid, parentUuid, item, cueId | Add to projectItems + tree            |
+| `item_updated`        | uuid, patch                   | Merge patch into existing item        |
+| `item_removed`        | uuid                          | Remove from projectItems + tree       |
+| `items_reordered`     | parentUuid, uuids[]           | Reorder children, recalculate indices |
+| `cart_slot_set`       | slot, itemUuid                | Update cartSlots                      |
+| `cart_slot_cleared`   | slot                          | Remove from cartSlots                 |
+| `selection_changed`   | itemUuid                      | Update selectedItemUuid               |
+| `master_gain_changed` | db                            | Update masterGainDb                   |
+| `next_item_set`       | itemUuid                      | Update nextItemUuid                   |
+
+### Selection Tracking
+
+Selection is tracked via two sources:
+
+1. `playback_snapshot.selected_item_uuid` — sent on connect/reconnect
+2. `doc_patch { op: "selection_changed" }` — sent on every UI click
+
+**DO NOT** add selection to meters frame — it's unnecessary (selection changes infrequently, meters at 60Hz).
+
+## LivePlay API Reference
+
+### Transport States
+
+- `0` = Stopped
+- `1` = Playing
+- `2` = FadingOut
+- `3` = Paused
+
+### Key Endpoints
+
+- `GET /api/health` → `{ ok: true, name: "liveplay-server" }`
+- `GET /api/project` → full project document with items tree
+- `GET /api/cues` → array of engine cues with metadata
+- `GET /api/selection` → `{ itemUuid: "..." }` current selection
+- `POST /api/selection` → `{ itemUuid: "..." }` or `{ delta: -1|1 }`
+
+### WebSocket Frames (Client → Server)
+
+- `play`, `stop`, `pause`, `resume` — transport control
+- `seek` — set playhead position
+- `gain`, `fade` — per-cue audio settings
+- `stop_all` — stop all cues
+- `set_selection` — set UI selection
+- `set_next_item` — set "Up Next" target
+
+## Companion Module Patterns
+
+### Action Options with Lookup Modes
+
+Use dropdown for lookup mode instead of checkbox:
 
 ```typescript
-// Always use proper typing for configuration
-interface ModuleConfig {
-	host: string
-	port: number
-	connectionTimeout: number
-	debugLogging: boolean
-	updateInterval: number
-}
+const cueOptions = [
+	{
+		id: 'lookupMode',
+		type: 'dropdown',
+		choices: [
+			{ id: 'uuid', label: 'By UUID' },
+			{ id: 'cue_id', label: 'By Engine Cue ID' },
+			{ id: 'index', label: 'By Index (e.g. 0, 1,3)' },
+		],
+	},
+	{ id: 'cueId', type: 'textinput', useVariables: true },
+]
+```
 
-export function getConfigFields(): SomeCompanionConfigField[] {
-	return [
-		{
-			type: 'textinput',
-			id: 'host',
-			label: 'LivePlay Server IP',
-			default: '127.0.0.1',
-			width: 8,
-		},
-		{
-			type: 'number',
-			id: 'port',
-			label: 'Port',
-			default: 4480,
-			min: 1,
-			max: 65535,
-			width: 4,
-		},
-		{
-			type: 'number',
-			id: 'connectionTimeout',
-			label: 'Connection Timeout (ms)',
-			default: 5000,
-			min: 1000,
-			max: 30000,
-			width: 6,
-		},
-		{
-			type: 'checkbox',
-			id: 'debugLogging',
-			label: 'Debug Logging',
-			default: false,
-			width: 6,
-		},
-		{
-			type: 'number',
-			id: 'updateInterval',
-			label: 'Update Interval (ms)',
-			default: 100,
-			min: 50,
-			max: 1000,
-			width: 6,
-		},
-	]
+### Index-Based Navigation
+
+Index paths are zero-based, comma or slash separated:
+
+- `"5"` = 6th top-level item
+- `"1,3"` or `"1/3"` = top-level[1].children[3]
+
+Use `findItemByIndex(indexPath)` to navigate the tree.
+
+### Learn Callback for Cue Assignment
+
+```typescript
+toggle_cue: {
+    name: 'Toggle Play/Stop',
+    options: cueOptions(),
+    callback: (event) => { /* toggle logic */ },
+    learn: () => {
+        if (!self.selectedItemUuid) return undefined
+        return { lookupMode: 'uuid', cueId: self.selectedItemUuid }
+    },
 }
 ```
 
-## Conventional Commit Policy
+## Build & Package
 
-### Commit Message Format
+### Commands
 
-```
-<type>(<scope>): <description>
+- `yarn build` — TypeScript → `dist/` (for development)
+- `yarn package` — build + bundle → `pkg/liveplay/` + `.tgz` (for Companion)
 
-[optional body]
+### Installation
 
-[optional footer(s)]
-```
+Copy `pkg/liveplay` to Companion modules directory:
+
+- Windows: `%APPDATA%/companion/modules/`
+- Linux: `~/.companion/modules/`
+
+### Git Hygiene
+
+- Never commit `dist/`, `pkg/`, or `*.tgz`
+- Never commit debug logs (`liveplay-debug-*.json`)
+- Use conventional commits: `feat(scope):`, `fix(scope):`, etc.
+
+## Commit Policy
 
 ### Types
 
-- **feat**: A new feature
-- **fix**: A bug fix
-- **docs**: Documentation only changes
-- **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc.)
-- **refactor**: A code change that neither fixes a bug nor adds a feature
-- **perf**: A code change that improves performance
-- **test**: Adding missing tests or correcting existing tests
-- **build**: Changes that affect the build system or external dependencies
-- **ci**: Changes to our CI configuration files and scripts
-- **chore**: Other changes that don't modify src or test files
-- **revert**: Reverts a previous commit
+- **feat**: New feature
+- **fix**: Bug fix
+- **refactor**: Code change that neither fixes nor adds
+- **perf**: Performance improvement
+- **docs**: Documentation only
+- **chore**: Other changes (build, CI, etc.)
 
 ### Scopes
 
-- **main**: Changes to the main module class
-- **config**: Configuration-related changes
-- **actions**: Action definitions and implementations
-- **feedbacks**: Feedback definitions and implementations
-- **variables**: Variable definitions and implementations
-- **presets**: Preset definitions and implementations
-- **api**: API client and WebSocket handling
-- **types**: Type definitions and interfaces
-- **docs**: Documentation changes
-- **build**: Build configuration and scripts
-
-### Examples
-
-```
-feat(actions): add play cue action with UUID support
-
-This commit adds a new action to play cues by UUID or cue ID.
-The action supports fade time configuration and proper error handling.
-
-fix(api): handle WebSocket connection timeouts properly
-
-- Added exponential backoff for reconnection attempts
-- Improved error logging for connection failures
-- Added proper cleanup on module destruction
-
-docs(help): update installation instructions
-
-- Added troubleshooting section
-- Updated setup steps for LivePlay server
-- Added example configurations
-
-refactor(variables): improve variable update performance
-
-- Debounced rapid updates to prevent performance issues
-- Added caching for frequently accessed data
-- Optimized variable update logic
-
-perf(feedbacks): reduce feedback update frequency
-
-- Implemented proper debouncing for feedback updates
-- Added rate limiting for real-time data
-- Optimized feedback callback execution
-```
-
-### Commit Message Guidelines
-
-1. **Use the imperative mood** ("add feature" not "added feature")
-2. **Keep messages concise** but descriptive
-3. **Include scope** for all non-trivial changes
-4. **Break large changes** into multiple logical commits
-5. **Reference issues** in the body when applicable
-6. **Test thoroughly** before committing
-7. **Run linting** to ensure code quality
-8. **Update documentation** when adding new features
-
-### Branch Naming Convention
-
-- **feature/**: For new features (e.g., `feature/cart-system`)
-- **fix/**: For bug fixes (e.g., `fix/connection-timeout`)
-- **docs/**: For documentation changes (e.g., `docs/api-reference`)
-- **refactor/**: For refactoring (e.g., `refactor/variable-system`)
-- **hotfix/**: For emergency fixes (e.g., `hotfix/security-patch`)
-
-## Build Process & Bundle Awareness
-
-The project uses a **two-stage build pipeline** to transform `src/` into a production package:
-
-### Stage 1: TypeScript Compilation (`yarn build`)
-
-- **Command**: `yarn build` (runs `rimraf dist && tsc -p tsconfig.build.json`)
-- **Input**: `src/**/*.ts` files
-- **Output**: `dist/` directory (intermediate, git-ignored)
-- **Process**:
-  - Strips all TypeScript types, interfaces, and generics
-  - Excludes test files (`*.spec.ts`), `__tests__/`, and `__mocks__/`
-  - Compiles to ES modules (project uses `"type": "module"`)
-  - Uses `verbatimModuleSyntax: true` for strict import/export syntax
-
-### Stage 2: Companion Packaging (`yarn package`)
-
-- **Command**: `yarn package` (runs `yarn build && npx companion-module-build`)
-- **Input**: `dist/` + `build-config.cjs` configuration
-- **Output**: `pkg/` directory (final package, git-ignored) + `.tgz` archive
-- **Process**:
-  - Bundles all code using `esbuild` (via `@companion-module/tools`)
-  - Applies Tree Shaking (removes unused exports)
-  - Minifies code (shortens variable names, removes whitespace/comments)
-  - Marks `@companion-module/base` as external (provided by Companion runtime)
-  - Preserves directory structure (`useOriginalStructureDirname: true` in `build-config.cjs`)
-
-### Critical Rules:
-
-1. **NEVER edit `dist/` or `pkg/`** — both are auto-generated and git-ignored
-2. **Source of truth is `src/`** — all logic, types, and tests live here
-3. **Use Yarn 4 commands** — `yarn build`, `yarn package`, `yarn dev` (not `npm run`)
-4. **ES Modules**: Project uses ESM (`import/export`), not CommonJS (`require/module.exports`)
-5. **External Dependencies**: `@companion-module/base` is NOT bundled — it's resolved from Companion's runtime
-6. **build-config.cjs**: Controls packaging behavior (directory structure, extra files, native prebuilds)
-7. **Refactoring Caution**: NEVER delete exports without checking if they're part of the public API or dynamically loaded
-8. **Bundle Size**: AVOID heavy libraries; prefer native JS or lightweight alternatives to minimize final package size
+- **main**: Main module class
+- **actions**: Action definitions
+- **feedbacks**: Feedback definitions
+- **variables**: Variable definitions
+- **presets**: Preset definitions
+- **api**: REST/WebSocket client
+- **types**: Type definitions
+- **ws**: WebSocket client
+- **connect**: Connection logic
+- **state**: State management
+- **update-loop**: Update loop logic
