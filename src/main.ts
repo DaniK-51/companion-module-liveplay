@@ -102,7 +102,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 		this.startUpdateLoop()
 
-		this.updateStatus(InstanceStatus.Ok)
+		this.updateStatus(InstanceStatus.Connecting)
 		this.updateActions()
 		this.updateFeedbacks()
 		this.updatePresets()
