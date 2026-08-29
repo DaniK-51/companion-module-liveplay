@@ -115,6 +115,7 @@ export type ActionsSchema = {
 	set_master_gain: { options: { db: number } }
 	toggle_no_play: { options: Record<string, never> }
 	toggle_preview_mode: { options: Record<string, never> }
+	toggle_next_mode: { options: Record<string, never> }
 	play_cue_preview: { options: CueLookupOptions }
 	stop_cue_preview: { options: Record<string, never> }
 	toggle_cue_preview: { options: CueLookupOptions }
@@ -308,6 +309,15 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: () => {
 				self.previewMode = !self.previewMode
 				self.log('info', `Preview mode: ${self.previewMode ? 'ON' : 'OFF'}`)
+			},
+		},
+		toggle_next_mode: {
+			name: 'Toggle Next Mode',
+			description: 'Switch between normal and next mode (set Up Next)',
+			options: [],
+			callback: () => {
+				self.nextMode = !self.nextMode
+				self.log('info', `Next mode: ${self.nextMode ? 'ON' : 'OFF'}`)
 			},
 		},
 		play_cue_preview: {

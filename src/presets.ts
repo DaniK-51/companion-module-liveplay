@@ -20,7 +20,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 					name: 'Transport',
 					description: 'Global transport controls',
 					type: 'simple',
-					presets: ['stop_all', 'no_play_mode', 'preview_mode'],
+					presets: ['stop_all', 'no_play_mode', 'preview_mode', 'next_mode'],
 				},
 			],
 		},
@@ -98,11 +98,32 @@ export function UpdatePresets(self: ModuleInstance): void {
 															options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
 														},
 													],
-													// Normal → toggle play/stop
 													elseActions: [
 														{
-															actionId: 'toggle_cue',
-															options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
+															actionId: 'internal:logicIf',
+															options: {},
+															children: {
+																condition: [
+																	{
+																		feedbackId: 'internal:checkExpression',
+																		options: { expression: '$(liveplay:next_mode) == 1' },
+																	},
+																],
+																// Next ON → set as next item
+																actions: [
+																	{
+																		actionId: 'toggle_next_item',
+																		options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
+																	},
+																],
+																// Normal → toggle play/stop
+																elseActions: [
+																	{
+																		actionId: 'toggle_cue',
+																		options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
+																	},
+																],
+															},
 														},
 													],
 												},
@@ -152,6 +173,11 @@ export function UpdatePresets(self: ModuleInstance): void {
 				style: { bgcolor: 0x9933ff, color: 0xffffff },
 			},
 			{
+				feedbackId: 'next_mode_assigned',
+				options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
+				style: { bgcolor: 0x00ccff, color: 0x000000 },
+			},
+			{
 				feedbackId: 'cue_is_playing',
 				options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
 				style: { bgcolor: 0x00ff00, color: 0x000000 },
@@ -192,6 +218,20 @@ export function UpdatePresets(self: ModuleInstance): void {
 				feedbackId: 'preview_mode_active',
 				options: {},
 				style: { bgcolor: 0x9933ff, color: 0xffffff, text: '$(liveplay:preview_item_name)' },
+			},
+		],
+	}
+
+	presets['next_mode'] = {
+		type: 'simple',
+		name: 'Next Mode',
+		style: { text: '$(liveplay:next_item_name)', size: '14', color: 0xffffff, bgcolor: 0x333333 },
+		steps: [{ down: [{ actionId: 'toggle_next_mode', options: {} }], up: [] }],
+		feedbacks: [
+			{
+				feedbackId: 'next_mode_active',
+				options: {},
+				style: { bgcolor: 0x00ccff, color: 0x000000, text: '$(liveplay:next_item_name)' },
 			},
 		],
 	}

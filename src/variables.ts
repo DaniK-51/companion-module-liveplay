@@ -26,8 +26,10 @@ export type VariablesSchema = {
 	project_item_count: number
 	no_play_mode: number
 	preview_mode: number
+	next_mode: number
 	preview_item_uuid: string
 	preview_item_name: string
+	next_item_name: string
 }
 
 export function UpdateVariableDefinitions(self: ModuleInstance): void {
@@ -57,8 +59,10 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		project_item_count: { name: 'Project Item Count' },
 		no_play_mode: { name: 'No-Play Mode (0=off, 1=on)' },
 		preview_mode: { name: 'Preview Mode (0=off, 1=on)' },
+		next_mode: { name: 'Next Mode (0=off, 1=on)' },
 		preview_item_uuid: { name: 'Preview Item UUID' },
 		preview_item_name: { name: 'Preview Item Name' },
+		next_item_name: { name: 'Next Item Name' },
 	})
 }
 
@@ -125,7 +129,9 @@ export function UpdateVariables(self: ModuleInstance): void {
 		project_item_count: s.projectItems.size,
 		no_play_mode: self.noPlayMode ? 1 : 0,
 		preview_mode: self.previewMode ? 1 : 0,
+		next_mode: self.nextMode ? 1 : 0,
 		preview_item_uuid: s.previewItemUuid ?? '',
 		preview_item_name: s.previewItemUuid ? (s.projectItems.get(s.previewItemUuid)?.displayName ?? '') : '',
+		next_item_name: s.nextItemUuid ? (s.projectItems.get(s.nextItemUuid)?.displayName ?? '') : '',
 	})
 }

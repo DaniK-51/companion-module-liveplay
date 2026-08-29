@@ -34,6 +34,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	connectionStatus: InstanceStatus = InstanceStatus.UnknownWarning
 	noPlayMode = false // When true, buttons only assign/unassign, no playback
 	previewMode = false // When true, assigned buttons play in preview instead of main
+	nextMode = false // When true, assigned buttons set as "Up Next" instead of playing
 	connectionMonitorIntervalId: ReturnType<typeof setInterval> | null = null
 	updateIntervalId: ReturnType<typeof setInterval> | null = null
 
@@ -199,6 +200,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				'no_play_assigned',
 				'preview_mode_active',
 				'preview_mode_assigned',
+				'next_mode_active',
+				'next_mode_assigned',
 				'cue_is_next',
 			)
 		}

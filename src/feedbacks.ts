@@ -215,6 +215,34 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				return !!opts.cueId
 			},
 		},
+		next_mode_active: {
+			name: 'Next Mode Active',
+			type: 'boolean',
+			defaultStyle: {
+				bgcolor: 0x00ccff,
+				color: 0x000000,
+			},
+			options: [],
+			callback: () => {
+				return self.nextMode
+			},
+		},
+		next_mode_assigned: {
+			name: 'Next Mode: Assigned (Cyan)',
+			type: 'boolean',
+			defaultStyle: {
+				bgcolor: 0x00ccff,
+				color: 0x000000,
+			},
+			options: cueOptions(),
+			callback: (feedback) => {
+				// Only active when next mode is ON
+				if (!self.nextMode) return false
+				// Only when button has an assigned cue
+				const opts = feedback.options as unknown as CueLookupOptions
+				return !!opts.cueId
+			},
+		},
 		cue_is_next: {
 			name: 'Cue Is Next',
 			type: 'boolean',
