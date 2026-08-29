@@ -102,7 +102,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		type: 'simple',
 		name: 'Assign & Toggle',
 		style: {
-			text: 'Assign',
+			text: '$(local:cue_name)',
 			size: 'auto',
 			color: 0xffffff,
 			bgcolor: 0x000000,
@@ -112,6 +112,11 @@ export function UpdatePresets(self: ModuleInstance): void {
 				variableName: 'cue_id',
 				variableType: 'simple',
 				startupValue: '',
+			},
+			{
+				variableName: 'cue_name',
+				variableType: 'simple',
+				startupValue: 'Assign',
 			},
 		],
 		steps: [
@@ -140,12 +145,19 @@ export function UpdatePresets(self: ModuleInstance): void {
 								},
 							],
 							elseActions: [
-								// Not assigned → capture selected UUID
+								// Not assigned → capture selected UUID and name
 								{
 									actionId: 'internal:localVariableSet',
 									options: {
 										name: 'cue_id',
 										value: '$(liveplay:selected_item_uuid)',
+									},
+								},
+								{
+									actionId: 'internal:localVariableSet',
+									options: {
+										name: 'cue_name',
+										value: '$(liveplay:selected_item_name)',
 									},
 								},
 							],
