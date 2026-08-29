@@ -168,7 +168,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return self.noPlayMode
+				return (self.modeFlags.get('no_play') ?? 0) === 1
 			},
 		},
 		no_play_assigned: {
@@ -180,9 +180,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				// Only active when no-play mode is ON
-				if (!self.noPlayMode) return false
-				// Only when button has an assigned cue
+				if ((self.modeFlags.get('no_play') ?? 0) !== 1) return false
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},
@@ -196,7 +194,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return self.previewMode
+				return (self.modeFlags.get('preview') ?? 0) === 1
 			},
 		},
 		preview_mode_assigned: {
@@ -208,9 +206,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				// Only active when preview mode is ON
-				if (!self.previewMode) return false
-				// Only when button has an assigned cue
+				if ((self.modeFlags.get('preview') ?? 0) !== 1) return false
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},
@@ -224,7 +220,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return self.nextMode
+				return (self.modeFlags.get('next') ?? 0) === 1
 			},
 		},
 		next_mode_assigned: {
@@ -236,9 +232,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				// Only active when next mode is ON
-				if (!self.nextMode) return false
-				// Only when button has an assigned cue
+				if ((self.modeFlags.get('next') ?? 0) !== 1) return false
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},

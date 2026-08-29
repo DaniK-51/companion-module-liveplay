@@ -32,9 +32,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	webSocketClient: LivePlayWebSocket | null = null
 	state!: ModuleState
 	connectionStatus: InstanceStatus = InstanceStatus.UnknownWarning
-	noPlayMode = false // When true, buttons only assign/unassign, no playback
-	previewMode = false // When true, assigned buttons play in preview instead of main
-	nextMode = false // When true, assigned buttons set as "Up Next" instead of playing
+	modeFlags = new Map<string, number>() // mode name → 0/1 (no_play, preview, next)
 	connectionMonitorIntervalId: ReturnType<typeof setInterval> | null = null
 	updateIntervalId: ReturnType<typeof setInterval> | null = null
 
