@@ -60,6 +60,23 @@ function resolveToCueId(self: ModuleInstance, opts: CueLookupOptions): string | 
 	}
 }
 
+function resolvePreviewUuid(self: ModuleInstance, opts: CueLookupOptions): string | undefined {
+	switch (opts.lookupMode) {
+		case 'uuid':
+			return opts.cueId || undefined
+		case 'cue_id': {
+			const foundUuid = self.state.cueIdToUuid.get(opts.cueId)
+			return foundUuid ?? opts.cueId
+		}
+		case 'index': {
+			const item = self.state.findItemByIndex(opts.cueId)
+			return item?.uuid
+		}
+		case 'selected':
+			return self.state.selectedItemUuid ?? undefined
+	}
+}
+
 function cueOptions(): SomeCompanionActionInputField[] {
 	return [
 		{
@@ -99,6 +116,8 @@ export type ActionsSchema = {
 	toggle_no_play: { options: Record<string, never> }
 	toggle_preview_mode: { options: Record<string, never> }
 	play_cue_preview: { options: CueLookupOptions }
+	stop_cue_preview: { options: Record<string, never> }
+	toggle_cue_preview: { options: CueLookupOptions }
 }
 
 export function UpdateActions(self: ModuleInstance): void {
@@ -294,35 +313,34 @@ export function UpdateActions(self: ModuleInstance): void {
 			options: cueOptions(),
 			callback: (event) => {
 				const opts = event.options
-				let uuid: string | undefined
-
-				switch (opts.lookupMode) {
-					case 'uuid':
-						uuid = opts.cueId
-						break
-					case 'cue_id': {
-						// Convert cue_id to uuid
-						const foundUuid = self.state.cueIdToUuid.get(opts.cueId)
-						uuid = foundUuid ?? opts.cueId
-						break
-					}
-					case 'index': {
-						const item = self.state.findItemByIndex(opts.cueId)
-						uuid = item?.uuid
-						break
-					}
-					case 'selected':
-						uuid = self.state.selectedItemUuid ?? undefined
-						break
-				}
-
-				if (!uuid) {
-					self.log('warn', 'Play Preview: no cue resolved')
-					return
-				}
-
-				// Call REST API to start preview
+				const uuid = resolvePreviewUuid(self, opts)
+				if (!uuid) return
 				void self.apiClient?.startPreview(uuid)
+			},
+		},
+		stop_cue_preview: {
+			name: 'Stop Cue Preview',
+			description: 'Stop preview playback',
+			options: [],
+			callback: () => {
+				void self.apiClient?.stopPreview()
+			},
+		},
+		toggle_cue_preview: {
+			name: 'Toggle Cue Preview',
+			description: 'Toggle preview playback for a cue',
+			options: cueOptions(),
+			callback: (event) => {
+				const opts = event.options
+				const uuid = resolvePreviewUuid(self, opts)
+				if (!uuid) return
+
+				// If same cue is already previewing, stop it
+				if (self.state.previewItemUuid === uuid) {
+					void self.apiClient?.stopPreview()
+				} else {
+					void self.apiClient?.startPreview(uuid)
+				}
 			},
 		},
 	})
