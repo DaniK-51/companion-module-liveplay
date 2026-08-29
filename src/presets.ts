@@ -209,59 +209,109 @@ export function UpdatePresets(self: ModuleInstance): void {
 	}
 
 	presets['preview_mode'] = {
-		type: 'simple',
+		type: 'layered',
 		name: 'Preview Mode',
-		style: {
-			text: {
-				isExpression: true,
-				value: '$(liveplay:preview_item_name) == "" ? "Preview" : $(liveplay:preview_item_name)',
-			} as any,
-			size: '14',
-			color: 0xffffff,
-			bgcolor: 0x333333,
-		},
+		elements: [
+			{
+				type: 'box',
+				id: 'bg',
+				x: { isExpression: false, value: 0 },
+				y: { isExpression: false, value: 0 },
+				width: { isExpression: false, value: 72 },
+				height: { isExpression: false, value: 72 },
+				color: { isExpression: false, value: 0x333333 },
+			},
+			{
+				type: 'text',
+				id: 'label',
+				x: { isExpression: false, value: 0 },
+				y: { isExpression: false, value: 0 },
+				width: { isExpression: false, value: 72 },
+				height: { isExpression: false, value: 72 },
+				text: {
+					isExpression: true,
+					value: '$(liveplay:preview_item_name) == "" ? "Preview" : $(liveplay:preview_item_name)',
+				},
+				color: { isExpression: false, value: 0xffffff },
+				fontsize: { isExpression: false, value: 14 },
+				halign: { isExpression: false, value: 'center' },
+				valign: { isExpression: false, value: 'center' },
+			},
+		],
 		steps: [{ down: [{ actionId: 'toggle_preview_mode', options: {} }], up: [] }],
 		feedbacks: [
 			{
 				feedbackId: 'preview_mode_active',
 				options: {},
-				style: {
-					bgcolor: 0x9933ff,
-					color: 0xffffff,
-					text: {
-						isExpression: true,
-						value: '$(liveplay:preview_item_name) == "" ? "PREVIEW" : $(liveplay:preview_item_name)',
-					} as any,
-				},
+				styleOverrides: [
+					{
+						elementId: 'bg',
+						elementProperty: 'color',
+						override: { isExpression: false, value: 0x9933ff },
+					},
+					{
+						elementId: 'label',
+						elementProperty: 'text',
+						override: {
+							isExpression: true,
+							value: '$(liveplay:preview_item_name) == "" ? "PREVIEW" : $(liveplay:preview_item_name)',
+						},
+					},
+				],
 			},
 		],
 	}
 
 	presets['next_mode'] = {
-		type: 'simple',
+		type: 'layered',
 		name: 'Next Mode',
-		style: {
-			text: {
-				isExpression: true,
-				value: '$(liveplay:next_item_name) == "" ? "Next" : $(liveplay:next_item_name)',
-			} as any,
-			size: '14',
-			color: 0xffffff,
-			bgcolor: 0x333333,
-		},
+		elements: [
+			{
+				type: 'box',
+				id: 'bg',
+				x: { isExpression: false, value: 0 },
+				y: { isExpression: false, value: 0 },
+				width: { isExpression: false, value: 72 },
+				height: { isExpression: false, value: 72 },
+				color: { isExpression: false, value: 0x333333 },
+			},
+			{
+				type: 'text',
+				id: 'label',
+				x: { isExpression: false, value: 0 },
+				y: { isExpression: false, value: 0 },
+				width: { isExpression: false, value: 72 },
+				height: { isExpression: false, value: 72 },
+				text: {
+					isExpression: true,
+					value: '$(liveplay:next_item_name) == "" ? "Next" : $(liveplay:next_item_name)',
+				},
+				color: { isExpression: false, value: 0xffffff },
+				fontsize: { isExpression: false, value: 14 },
+				halign: { isExpression: false, value: 'center' },
+				valign: { isExpression: false, value: 'center' },
+			},
+		],
 		steps: [{ down: [{ actionId: 'toggle_next_mode', options: {} }], up: [] }],
 		feedbacks: [
 			{
 				feedbackId: 'next_mode_active',
 				options: {},
-				style: {
-					bgcolor: 0x00ccff,
-					color: 0x000000,
-					text: {
-						isExpression: true,
-						value: '$(liveplay:next_item_name) == "" ? "NEXT" : $(liveplay:next_item_name)',
-					} as any,
-				},
+				styleOverrides: [
+					{
+						elementId: 'bg',
+						elementProperty: 'color',
+						override: { isExpression: false, value: 0x00ccff },
+					},
+					{
+						elementId: 'label',
+						elementProperty: 'text',
+						override: {
+							isExpression: true,
+							value: '$(liveplay:next_item_name) == "" ? "NEXT" : $(liveplay:next_item_name)',
+						},
+					},
+				],
 			},
 		],
 	}
