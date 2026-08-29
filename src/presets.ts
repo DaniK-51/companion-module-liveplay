@@ -91,10 +91,10 @@ export function UpdatePresets(self: ModuleInstance): void {
 															options: { expression: '$(liveplay:preview_mode) == 1' },
 														},
 													],
-													// Preview ON → start preview
+													// Preview ON → toggle preview
 													actions: [
 														{
-															actionId: 'play_cue_preview',
+															actionId: 'toggle_cue_preview',
 															options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
 														},
 													],
