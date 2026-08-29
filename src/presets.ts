@@ -165,6 +165,36 @@ export function UpdatePresets(self: ModuleInstance): void {
 					},
 				],
 				up: [],
+				// Long press (1s) → reset button to unassigned state
+				1000: {
+					options: { runWhileHeld: false },
+					actions: [
+						// Stop the cue if it's playing
+						{
+							actionId: 'stop_cue',
+							options: {
+								lookupMode: 'uuid',
+								cueId: '$(local:cue_id)',
+							},
+						},
+						// Clear cue_id
+						{
+							actionId: 'internal:localVariableSet',
+							options: {
+								name: 'cue_id',
+								value: '',
+							},
+						},
+						// Reset name to 'Assign'
+						{
+							actionId: 'internal:localVariableSet',
+							options: {
+								name: 'cue_name',
+								value: 'Assign',
+							},
+						},
+					],
+				},
 			},
 		],
 		feedbacks: [
