@@ -187,5 +187,33 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				return !!opts.cueId
 			},
 		},
+		preview_mode_active: {
+			name: 'Preview Mode Active',
+			type: 'boolean',
+			defaultStyle: {
+				bgcolor: 0x9933ff,
+				color: 0xffffff,
+			},
+			options: [],
+			callback: () => {
+				return self.previewMode
+			},
+		},
+		preview_mode_assigned: {
+			name: 'Preview Mode: Assigned (Purple)',
+			type: 'boolean',
+			defaultStyle: {
+				bgcolor: 0x9933ff,
+				color: 0xffffff,
+			},
+			options: cueOptions(),
+			callback: (feedback) => {
+				// Only active when preview mode is ON
+				if (!self.previewMode) return false
+				// Only when button has an assigned cue
+				const opts = feedback.options as unknown as CueLookupOptions
+				return !!opts.cueId
+			},
+		},
 	} satisfies CompanionFeedbackDefinitions)
 }

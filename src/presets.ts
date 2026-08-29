@@ -20,7 +20,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 					name: 'Transport',
 					description: 'Global transport controls',
 					type: 'simple',
-					presets: ['stop_all', 'no_play_mode'],
+					presets: ['stop_all', 'no_play_mode', 'preview_mode'],
 				},
 			],
 		},
@@ -75,14 +75,37 @@ export function UpdatePresets(self: ModuleInstance): void {
 												options: { expression: '$(liveplay:no_play_mode) == 1' },
 											},
 										],
+										// No-play ON → reset button
 										actions: [
 											{ actionId: 'internal:localVariableSet', options: { name: 'cue_id', value: '' } },
 											{ actionId: 'internal:localVariableSet', options: { name: 'cue_name', value: 'Assign' } },
 										],
 										elseActions: [
 											{
-												actionId: 'toggle_cue',
-												options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
+												actionId: 'internal:logicIf',
+												options: {},
+												children: {
+													condition: [
+														{
+															feedbackId: 'internal:checkExpression',
+															options: { expression: '$(liveplay:preview_mode) == 1' },
+														},
+													],
+													// Preview ON → start preview
+													actions: [
+														{
+															actionId: 'play_cue_preview',
+															options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
+														},
+													],
+													// Normal → toggle play/stop
+													elseActions: [
+														{
+															actionId: 'toggle_cue',
+															options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
+														},
+													],
+												},
 											},
 										],
 									},
@@ -124,6 +147,11 @@ export function UpdatePresets(self: ModuleInstance): void {
 				style: { bgcolor: 0x0066ff, color: 0xffffff },
 			},
 			{
+				feedbackId: 'preview_mode_assigned',
+				options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
+				style: { bgcolor: 0x9933ff, color: 0xffffff },
+			},
+			{
 				feedbackId: 'cue_is_playing',
 				options: { lookupMode: 'uuid', cueId: '$(local:cue_id)' },
 				style: { bgcolor: 0x00ff00, color: 0x000000 },
@@ -151,6 +179,20 @@ export function UpdatePresets(self: ModuleInstance): void {
 		steps: [{ down: [{ actionId: 'toggle_no_play', options: {} }], up: [] }],
 		feedbacks: [
 			{ feedbackId: 'no_play_active', options: {}, style: { bgcolor: 0xff8800, color: 0x000000, text: 'SETUP' } },
+		],
+	}
+
+	presets['preview_mode'] = {
+		type: 'simple',
+		name: 'Preview Mode',
+		style: { text: 'Preview', size: '14', color: 0xffffff, bgcolor: 0x333333 },
+		steps: [{ down: [{ actionId: 'toggle_preview_mode', options: {} }], up: [] }],
+		feedbacks: [
+			{
+				feedbackId: 'preview_mode_active',
+				options: {},
+				style: { bgcolor: 0x9933ff, color: 0xffffff, text: 'PREVIEW' },
+			},
 		],
 	}
 

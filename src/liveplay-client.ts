@@ -112,6 +112,19 @@ export class LivePlayApiClient {
 		})
 	}
 
+	async startPreview(itemUuid: string): Promise<void> {
+		await this.makeRequest('/api/preview', {
+			method: 'POST',
+			body: JSON.stringify({ itemUuid }),
+		})
+	}
+
+	async stopPreview(): Promise<void> {
+		await this.makeRequest('/api/preview', {
+			method: 'DELETE',
+		})
+	}
+
 	destroy(): void {
 		// No persistent resources to clean up
 	}

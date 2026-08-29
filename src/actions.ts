@@ -97,6 +97,8 @@ export type ActionsSchema = {
 	stop_all: { options: Record<string, never> }
 	set_master_gain: { options: { db: number } }
 	toggle_no_play: { options: Record<string, never> }
+	toggle_preview_mode: { options: Record<string, never> }
+	play_cue_preview: { options: CueLookupOptions }
 }
 
 export function UpdateActions(self: ModuleInstance): void {
@@ -275,6 +277,52 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: () => {
 				self.noPlayMode = !self.noPlayMode
 				self.log('info', `No-Play mode: ${self.noPlayMode ? 'ON' : 'OFF'}`)
+			},
+		},
+		toggle_preview_mode: {
+			name: 'Toggle Preview Mode',
+			description: 'Switch between normal and preview mode (pre-listen)',
+			options: [],
+			callback: () => {
+				self.previewMode = !self.previewMode
+				self.log('info', `Preview mode: ${self.previewMode ? 'ON' : 'OFF'}`)
+			},
+		},
+		play_cue_preview: {
+			name: 'Play Cue Preview',
+			description: 'Start preview playback for a cue (DJ-style pre-listen)',
+			options: cueOptions(),
+			callback: (event) => {
+				const opts = event.options
+				let uuid: string | undefined
+
+				switch (opts.lookupMode) {
+					case 'uuid':
+						uuid = opts.cueId
+						break
+					case 'cue_id': {
+						// Convert cue_id to uuid
+						const foundUuid = self.state.cueIdToUuid.get(opts.cueId)
+						uuid = foundUuid ?? opts.cueId
+						break
+					}
+					case 'index': {
+						const item = self.state.findItemByIndex(opts.cueId)
+						uuid = item?.uuid
+						break
+					}
+					case 'selected':
+						uuid = self.state.selectedItemUuid ?? undefined
+						break
+				}
+
+				if (!uuid) {
+					self.log('warn', 'Play Preview: no cue resolved')
+					return
+				}
+
+				// Call REST API to start preview
+				void self.apiClient?.startPreview(uuid)
 			},
 		},
 	})

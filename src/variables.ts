@@ -25,6 +25,7 @@ export type VariablesSchema = {
 	project_name: string
 	project_item_count: number
 	no_play_mode: number
+	preview_mode: number
 }
 
 export function UpdateVariableDefinitions(self: ModuleInstance): void {
@@ -53,6 +54,7 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		project_name: { name: 'Project Name' },
 		project_item_count: { name: 'Project Item Count' },
 		no_play_mode: { name: 'No-Play Mode (0=off, 1=on)' },
+		preview_mode: { name: 'Preview Mode (0=off, 1=on)' },
 	})
 }
 
@@ -118,5 +120,6 @@ export function UpdateVariables(self: ModuleInstance): void {
 		project_name: s.projectName,
 		project_item_count: s.projectItems.size,
 		no_play_mode: self.noPlayMode ? 1 : 0,
+		preview_mode: self.previewMode ? 1 : 0,
 	})
 }
