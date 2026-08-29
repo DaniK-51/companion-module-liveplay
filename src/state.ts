@@ -58,6 +58,10 @@ export class ModuleState {
 	// === Master ===
 	masterGainDb = 0
 
+	// === Preview State ===
+	previewItemUuid: string | null = null
+	previewCueId: string | null = null
+
 	// === Aggregated player state ===
 	currentPlayerState: PlayerState = {
 		state: 'stopped',
@@ -221,6 +225,12 @@ export class ModuleState {
 		this.masterGainDb = msg.master_gain_db
 		this.selectedItemUuid = msg.selected_item_uuid || null
 
+		// Update preview state from snapshot
+		if (msg.preview) {
+			this.previewItemUuid = msg.preview.item_uuid || null
+			this.previewCueId = msg.preview.cue_id || null
+		}
+
 		this.recalculateState()
 
 		if (this.debugLogging) {
@@ -319,7 +329,21 @@ export class ModuleState {
 				break
 
 			case 'preview_started':
+				this.previewItemUuid = (msg.itemUuid as string) || null
+				this.previewCueId = (msg.cueId as string) || null
+				if (this.debugLogging) {
+					this.log('debug', `preview_started: ${this.previewItemUuid}`)
+				}
+				break
+
 			case 'preview_stopped':
+				this.previewItemUuid = null
+				this.previewCueId = null
+				if (this.debugLogging) {
+					this.log('debug', 'preview_stopped')
+				}
+				break
+
 			case 'theme_patched':
 			case 'settings_patched':
 			case 'waveform_ready':

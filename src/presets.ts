@@ -191,7 +191,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 			{
 				feedbackId: 'preview_mode_active',
 				options: {},
-				style: { bgcolor: 0x9933ff, color: 0xffffff, text: 'PREVIEW' },
+				style: { bgcolor: 0x9933ff, color: 0xffffff, text: '$(liveplay:preview_item_name)' },
 			},
 		],
 	}
