@@ -113,7 +113,7 @@ export type ActionsSchema = {
 	set_cue_fade: { options: CueLookupOptions & { inMs: number; outMs: number } }
 	stop_all: { options: Record<string, never> }
 	set_master_gain: { options: { db: number } }
-	toggle_mode: { options: { mode: string } }
+	toggle_mode: { options: { mode: string; variableName: string } }
 	play_cue_preview: { options: CueLookupOptions }
 	stop_cue_preview: { options: Record<string, never> }
 	toggle_cue_preview: { options: CueLookupOptions }
@@ -293,7 +293,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		toggle_mode: {
 			name: 'Toggle Mode',
-			description: 'Toggle a mode flag (no_play, preview, next)',
+			description: 'Toggle between normal and a specific mode. Only one mode active at a time.',
 			options: [
 				{
 					id: 'mode',
@@ -306,16 +306,27 @@ export function UpdateActions(self: ModuleInstance): void {
 						{ id: 'next', label: 'Next' },
 					],
 				},
+				{
+					id: 'variableName',
+					type: 'custom-variable',
+					label: 'Variable to store mode',
+				},
 			],
 			callback: (event, context) => {
 				const mode = event.options.mode
-				const varName = `liveplay_${mode}`
-				// Read current value from custom variable (we track it in module state too)
-				const current = self.modeFlags.get(mode) ?? 0
-				const newVal = current ? 0 : 1
-				self.modeFlags.set(mode, newVal)
-				context.setCustomVariableValue(varName, newVal)
-				self.log('info', `Mode ${mode}: ${newVal ? 'ON' : 'OFF'}`)
+				const varName = event.options.variableName
+				if (!varName) {
+					self.log('warn', 'Toggle Mode: no variable name provided')
+					return
+				}
+
+				// Toggle: if same mode → clear, otherwise → set new mode
+				const current = self.currentMode
+				const newMode = current === mode ? '' : mode
+				self.currentMode = newMode
+
+				context.setCustomVariableValue(varName, newMode)
+				self.log('info', `Mode: ${newMode || 'normal'}`)
 			},
 		},
 		play_cue_preview: {

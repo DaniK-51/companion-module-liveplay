@@ -168,7 +168,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return (self.modeFlags.get('no_play') ?? 0) === 1
+				return self.currentMode === 'no_play'
 			},
 		},
 		no_play_assigned: {
@@ -180,7 +180,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				if ((self.modeFlags.get('no_play') ?? 0) !== 1) return false
+				if (self.currentMode !== 'no_play') return false
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},
@@ -194,7 +194,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return (self.modeFlags.get('preview') ?? 0) === 1
+				return self.currentMode === 'preview'
 			},
 		},
 		preview_mode_assigned: {
@@ -206,7 +206,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				if ((self.modeFlags.get('preview') ?? 0) !== 1) return false
+				if (self.currentMode !== 'preview') return false
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},
@@ -220,7 +220,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return (self.modeFlags.get('next') ?? 0) === 1
+				return self.currentMode === 'next'
 			},
 		},
 		next_mode_assigned: {
@@ -232,7 +232,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				if ((self.modeFlags.get('next') ?? 0) !== 1) return false
+				if (self.currentMode !== 'next') return false
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},
