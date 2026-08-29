@@ -226,6 +226,40 @@ toggle_cue: {
 }
 ```
 
+## API 2.1 Features (Companion 5.0+)
+
+### Internal Actions in Presets
+
+Presets can use Companion's built-in actions (API 2.1+):
+
+- `internal:wait` — `{ time: number }` — wait N ms
+- `internal:customLog` — `{ message: string }` — log message
+- `internal:abortButton` — `{ skipReleaseActions?: boolean }` — abort button actions
+- `internal:localVariableSet` — `{ name: string; value: string }` — set local variable
+
+### Internal Feedbacks in Presets
+
+- `internal:checkExpression` — `{ expression: string }` — boolean expression
+- `internal:buttonPushed` — `{ treatSteppedAsPressed?: boolean }` — button pressed state
+- `internal:buttonCurrentStep` — `{ step: number }` — current step
+
+### Logic Building Blocks
+
+- `internal:actionGroup` — group actions
+- `internal:logicIf` — conditional logic
+- `internal:logicWhile` — loop
+- `internal:logicOperator` — and/or/xor
+
+### ActionsSchema Type (API 2.1)
+
+```typescript
+// API 2.1 requires explicit type definition:
+export type ActionsSchema = {
+	action_name: { options: OptionType }
+	// ...
+}
+```
+
 ## Build & Package
 
 ### Commands
