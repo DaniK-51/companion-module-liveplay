@@ -50,12 +50,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 				variableType: 'simple',
 				startupValue: 'Assign',
 			},
-			{
-				variableName: 'mode_var',
-				variableType: 'simple',
-				startupValue: 'liveplay_mode',
-				headline: 'Custom variable name for mode state',
-			},
 		],
 		steps: [
 			{
@@ -78,7 +72,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 										condition: [
 											{
 												feedbackId: 'internal:checkExpression',
-												options: { expression: "$(custom:$(local:mode_var)) == 'no_play'" },
+												options: { expression: '$(liveplay:no_play_mode) == 1' },
 											},
 										],
 										// No-play ON → reset button
@@ -94,7 +88,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 													condition: [
 														{
 															feedbackId: 'internal:checkExpression',
-															options: { expression: "$(custom:$(local:mode_var)) == 'preview'" },
+															options: { expression: '$(liveplay:preview_mode) == 1' },
 														},
 													],
 													// Preview ON → toggle preview
@@ -112,7 +106,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 																condition: [
 																	{
 																		feedbackId: 'internal:checkExpression',
-																		options: { expression: "$(custom:$(local:mode_var)) == 'next'" },
+																		options: { expression: '$(liveplay:next_mode) == 1' },
 																	},
 																],
 																// Next ON → set as next item
@@ -208,17 +202,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		type: 'simple',
 		name: 'No-Play Mode',
 		style: { text: 'Setup', size: '18', color: 0xffffff, bgcolor: 0x333333 },
-		localVariables: [
-			{
-				variableName: 'mode_var',
-				variableType: 'simple',
-				startupValue: 'liveplay_mode',
-				headline: 'Custom variable name for mode state',
-			},
-		],
-		steps: [
-			{ down: [{ actionId: 'toggle_mode', options: { mode: 'no_play', variableName: '$(local:mode_var)' } }], up: [] },
-		],
+		steps: [{ down: [{ actionId: 'toggle_no_play', options: {} }], up: [] }],
 		feedbacks: [
 			{ feedbackId: 'no_play_active', options: {}, style: { bgcolor: 0xff8800, color: 0x000000, text: 'SETUP' } },
 		],
@@ -228,17 +212,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		type: 'simple',
 		name: 'Preview Mode',
 		style: { text: 'Preview', size: '14', color: 0xffffff, bgcolor: 0x333333 },
-		localVariables: [
-			{
-				variableName: 'mode_var',
-				variableType: 'simple',
-				startupValue: 'liveplay_mode',
-				headline: 'Custom variable name for mode state',
-			},
-		],
-		steps: [
-			{ down: [{ actionId: 'toggle_mode', options: { mode: 'preview', variableName: '$(local:mode_var)' } }], up: [] },
-		],
+		steps: [{ down: [{ actionId: 'toggle_preview_mode', options: {} }], up: [] }],
 		feedbacks: [
 			{
 				feedbackId: 'preview_mode_active',
@@ -252,17 +226,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		type: 'simple',
 		name: 'Next Mode',
 		style: { text: '$(liveplay:next_item_name)', size: '14', color: 0xffffff, bgcolor: 0x333333 },
-		localVariables: [
-			{
-				variableName: 'mode_var',
-				variableType: 'simple',
-				startupValue: 'liveplay_mode',
-				headline: 'Custom variable name for mode state',
-			},
-		],
-		steps: [
-			{ down: [{ actionId: 'toggle_mode', options: { mode: 'next', variableName: '$(local:mode_var)' } }], up: [] },
-		],
+		steps: [{ down: [{ actionId: 'toggle_next_mode', options: {} }], up: [] }],
 		feedbacks: [
 			{
 				feedbackId: 'next_mode_active',

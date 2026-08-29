@@ -113,7 +113,9 @@ export type ActionsSchema = {
 	set_cue_fade: { options: CueLookupOptions & { inMs: number; outMs: number } }
 	stop_all: { options: Record<string, never> }
 	set_master_gain: { options: { db: number } }
-	toggle_mode: { options: { mode: string; variableName: string } }
+	toggle_no_play: { options: Record<string, never> }
+	toggle_preview_mode: { options: Record<string, never> }
+	toggle_next_mode: { options: Record<string, never> }
 	play_cue_preview: { options: CueLookupOptions }
 	stop_cue_preview: { options: Record<string, never> }
 	toggle_cue_preview: { options: CueLookupOptions }
@@ -291,42 +293,31 @@ export function UpdateActions(self: ModuleInstance): void {
 				void self.apiClient?.setMasterGain(event.options.db)
 			},
 		},
-		toggle_mode: {
-			name: 'Toggle Mode',
-			description: 'Toggle between normal and a specific mode. Only one mode active at a time.',
-			options: [
-				{
-					id: 'mode',
-					type: 'dropdown',
-					label: 'Mode',
-					default: 'no_play',
-					choices: [
-						{ id: 'no_play', label: 'No-Play (Setup)' },
-						{ id: 'preview', label: 'Preview' },
-						{ id: 'next', label: 'Next' },
-					],
-				},
-				{
-					id: 'variableName',
-					type: 'custom-variable',
-					label: 'Variable to store mode',
-				},
-			],
-			callback: (event, context) => {
-				const mode = event.options.mode
-				const varName = event.options.variableName
-				if (!varName) {
-					self.log('warn', 'Toggle Mode: no variable name provided')
-					return
-				}
-
-				// Toggle: if same mode → clear, otherwise → set new mode
-				const current = self.currentMode
-				const newMode = current === mode ? '' : mode
-				self.currentMode = newMode
-
-				context.setCustomVariableValue(varName, newMode)
-				self.log('info', `Mode: ${newMode || 'normal'}`)
+		toggle_no_play: {
+			name: 'Toggle No-Play Mode',
+			description: 'Switch between normal and no-play mode for button setup',
+			options: [],
+			callback: () => {
+				self.noPlayMode = !self.noPlayMode
+				self.log('info', `No-Play mode: ${self.noPlayMode ? 'ON' : 'OFF'}`)
+			},
+		},
+		toggle_preview_mode: {
+			name: 'Toggle Preview Mode',
+			description: 'Switch between normal and preview mode (pre-listen)',
+			options: [],
+			callback: () => {
+				self.previewMode = !self.previewMode
+				self.log('info', `Preview mode: ${self.previewMode ? 'ON' : 'OFF'}`)
+			},
+		},
+		toggle_next_mode: {
+			name: 'Toggle Next Mode',
+			description: 'Switch between normal and next mode (set Up Next)',
+			options: [],
+			callback: () => {
+				self.nextMode = !self.nextMode
+				self.log('info', `Next mode: ${self.nextMode ? 'ON' : 'OFF'}`)
 			},
 		},
 		play_cue_preview: {

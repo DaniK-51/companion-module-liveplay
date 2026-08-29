@@ -168,7 +168,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return self.currentMode === 'no_play'
+				return self.noPlayMode
 			},
 		},
 		no_play_assigned: {
@@ -180,7 +180,9 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				if (self.currentMode !== 'no_play') return false
+				// Only active when no-play mode is ON
+				if (!self.noPlayMode) return false
+				// Only when button has an assigned cue
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},
@@ -194,7 +196,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return self.currentMode === 'preview'
+				return self.previewMode
 			},
 		},
 		preview_mode_assigned: {
@@ -206,7 +208,9 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				if (self.currentMode !== 'preview') return false
+				// Only active when preview mode is ON
+				if (!self.previewMode) return false
+				// Only when button has an assigned cue
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},
@@ -220,7 +224,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: [],
 			callback: () => {
-				return self.currentMode === 'next'
+				return self.nextMode
 			},
 		},
 		next_mode_assigned: {
@@ -232,7 +236,9 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 			options: cueOptions(),
 			callback: (feedback) => {
-				if (self.currentMode !== 'next') return false
+				// Only active when next mode is ON
+				if (!self.nextMode) return false
+				// Only when button has an assigned cue
 				const opts = feedback.options as unknown as CueLookupOptions
 				return !!opts.cueId
 			},
