@@ -146,6 +146,8 @@ LivePlay Server
 | `selection_changed`   | itemUuid                      | Update selectedItemUuid               |
 | `master_gain_changed` | db                            | Update masterGainDb                   |
 | `next_item_set`       | itemUuid                      | Update nextItemUuid                   |
+| `preview_started`     | itemUuid, cueId               | Update previewItemUuid/previewCueId   |
+| `preview_stopped`     | (none)                        | Clear preview state                   |
 
 ### Selection Tracking
 
@@ -186,7 +188,7 @@ Selection is tracked via two sources:
 
 ### Action Options with Lookup Modes
 
-Use dropdown for lookup mode instead of checkbox:
+Use dropdown for lookup mode:
 
 ```typescript
 const cueOptions = [
@@ -197,11 +199,72 @@ const cueOptions = [
 			{ id: 'uuid', label: 'By UUID' },
 			{ id: 'cue_id', label: 'By Engine Cue ID' },
 			{ id: 'index', label: 'By Index (e.g. 0, 1,3)' },
+			{ id: 'selected', label: 'Selected in LivePlay' },
 		],
 	},
 	{ id: 'cueId', type: 'textinput', useVariables: true },
 ]
 ```
+
+### Mode System
+
+Three mutually exclusive modes control button behavior:
+
+| Mode    | Property      | Variable       | Behavior                      |
+| ------- | ------------- | -------------- | ----------------------------- |
+| No-Play | `noPlayMode`  | `no_play_mode` | Assign/unassign only          |
+| Preview | `previewMode` | `preview_mode` | Pre-listen via preview device |
+| Next    | `nextMode`    | `next_mode`    | Set as "Up Next" target       |
+
+Toggle actions: `toggle_no_play`, `toggle_preview_mode`, `toggle_next_mode`
+
+### Layered Presets with Expressions
+
+For buttons that need expression-driven text, use layered presets:
+
+```typescript
+presets['my_preset'] = {
+    type: 'layered',
+    name: 'My Preset',
+    elements: [
+        {
+            type: 'box',
+            id: 'bg',
+            x: { isExpression: false, value: 0 },
+            y: { isExpression: false, value: 0 },
+            width: { isExpression: false, value: 100 },
+            height: { isExpression: false, value: 100 },
+            color: { isExpression: false, value: 0x333333 },
+        },
+        {
+            type: 'text',
+            id: 'label',
+            x: { isExpression: false, value: 0 },
+            y: { isExpression: false, value: 0 },
+            width: { isExpression: false, value: 100 },
+            height: { isExpression: false, value: 100 },
+            text: { isExpression: true, value: '$(liveplay:some_var) == "" ? "Default" : $(liveplay:some_var)' },
+            color: { isExpression: false, value: 0xffffff },
+            fontsize: { isExpression: false, value: 38 },
+            halign: { isExpression: false, value: 'center' },
+            valign: { isExpression: false, value: 'center' },
+        },
+    ],
+    steps: [...],
+    feedbacks: [
+        {
+            feedbackId: 'my_feedback',
+            options: {},
+            styleOverrides: [
+                { elementId: 'bg', elementProperty: 'color', override: { isExpression: false, value: 0x00ff00 } },
+                { elementId: 'label', elementProperty: 'text', override: { isExpression: true, value: '...' } },
+            ],
+        },
+    ],
+}
+```
+
+**Note:** `style.text` in simple presets only supports plain strings (variables work, expressions don't). Use layered presets for expression-driven text.
 
 ### Index-Based Navigation
 
