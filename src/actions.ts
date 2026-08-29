@@ -96,6 +96,7 @@ export type ActionsSchema = {
 	set_cue_fade: { options: CueLookupOptions & { inMs: number; outMs: number } }
 	stop_all: { options: Record<string, never> }
 	set_master_gain: { options: { db: number } }
+	toggle_no_play: { options: Record<string, never> }
 }
 
 export function UpdateActions(self: ModuleInstance): void {
@@ -265,6 +266,15 @@ export function UpdateActions(self: ModuleInstance): void {
 			],
 			callback: (event) => {
 				void self.apiClient?.setMasterGain(event.options.db)
+			},
+		},
+		toggle_no_play: {
+			name: 'Toggle No-Play Mode',
+			description: 'Switch between normal and no-play mode for button setup',
+			options: [],
+			callback: () => {
+				self.noPlayMode = !self.noPlayMode
+				self.log('info', `No-Play mode: ${self.noPlayMode ? 'ON' : 'OFF'}`)
 			},
 		},
 	})

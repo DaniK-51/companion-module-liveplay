@@ -20,7 +20,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 					name: 'Transport',
 					description: 'Global transport controls',
 					type: 'simple',
-					presets: ['stop_all'],
+					presets: ['stop_all', 'no_play_mode'],
 				},
 			],
 		},
@@ -57,6 +57,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 						actionId: 'internal:logicIf',
 						options: {},
 						children: {
+							// Is button assigned?
 							condition: [
 								{
 									feedbackId: 'internal:checkExpression',
@@ -65,15 +66,46 @@ export function UpdatePresets(self: ModuleInstance): void {
 									},
 								},
 							],
+							// YES - button is assigned
 							actions: [
 								{
-									actionId: 'toggle_cue',
-									options: {
-										lookupMode: 'uuid',
-										cueId: '$(local:cue_id)',
+									actionId: 'internal:logicIf',
+									options: {},
+									children: {
+										// Check no-play mode
+										condition: [
+											{
+												feedbackId: 'internal:checkExpression',
+												options: {
+													expression: '$(liveplay:no_play_mode) == 1',
+												},
+											},
+										],
+										// No-play ON → reset button
+										actions: [
+											{
+												actionId: 'internal:localVariableSet',
+												options: { name: 'cue_id', value: '' },
+											},
+											{
+												actionId: 'internal:localVariableSet',
+												options: { name: 'cue_name', value: 'Assign' },
+											},
+										],
+										// No-play OFF → toggle playback
+										elseActions: [
+											{
+												actionId: 'toggle_cue',
+												options: {
+													lookupMode: 'uuid',
+													cueId: '$(local:cue_id)',
+												},
+											},
+										],
 									},
 								},
 							],
+							// NO - button not assigned → capture selected
 							elseActions: [
 								{
 									actionId: 'internal:localVariableSet',
@@ -94,7 +126,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 					},
 				],
 				up: [],
-				// Long press (1s) → reset to unassigned
+				// Long press (1s) → always reset
 				1000: {
 					options: { runWhileHeld: false },
 					actions: [
@@ -107,17 +139,11 @@ export function UpdatePresets(self: ModuleInstance): void {
 						},
 						{
 							actionId: 'internal:localVariableSet',
-							options: {
-								name: 'cue_id',
-								value: '',
-							},
+							options: { name: 'cue_id', value: '' },
 						},
 						{
 							actionId: 'internal:localVariableSet',
-							options: {
-								name: 'cue_name',
-								value: 'Assign',
-							},
+							options: { name: 'cue_name', value: 'Assign' },
 						},
 					],
 				},
@@ -189,6 +215,40 @@ export function UpdatePresets(self: ModuleInstance): void {
 				style: {
 					bgcolor: 0xff0000,
 					color: 0xffffff,
+				},
+			},
+		],
+	}
+
+	// Preset 3: No-Play Mode Toggle
+	presets['no_play_mode'] = {
+		type: 'simple',
+		name: 'No-Play Mode',
+		style: {
+			text: 'Setup',
+			size: '18',
+			color: 0xffffff,
+			bgcolor: 0x333333,
+		},
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'toggle_no_play',
+						options: {},
+					},
+				],
+				up: [],
+			},
+		],
+		feedbacks: [
+			{
+				feedbackId: 'no_play_active',
+				options: {},
+				style: {
+					bgcolor: 0xff8800,
+					color: 0x000000,
+					text: 'SETUP',
 				},
 			},
 		],

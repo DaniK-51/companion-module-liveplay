@@ -24,6 +24,7 @@ export type VariablesSchema = {
 	mixer_rms_db: number
 	project_name: string
 	project_item_count: number
+	no_play_mode: number
 }
 
 export function UpdateVariableDefinitions(self: ModuleInstance): void {
@@ -51,6 +52,7 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		mixer_rms_db: { name: 'Mixer RMS (dB)' },
 		project_name: { name: 'Project Name' },
 		project_item_count: { name: 'Project Item Count' },
+		no_play_mode: { name: 'No-Play Mode (0=off, 1=on)' },
 	})
 }
 
@@ -115,5 +117,6 @@ export function UpdateVariables(self: ModuleInstance): void {
 		mixer_rms_db: mixerRmsDb,
 		project_name: s.projectName,
 		project_item_count: s.projectItems.size,
+		no_play_mode: self.noPlayMode ? 1 : 0,
 	})
 }

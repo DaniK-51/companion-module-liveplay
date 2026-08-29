@@ -159,5 +159,17 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				return self.state.selectedItemUuid !== null
 			},
 		},
+		no_play_active: {
+			name: 'No-Play Mode Active',
+			type: 'boolean',
+			defaultStyle: {
+				bgcolor: 0xff8800,
+				color: 0x000000,
+			},
+			options: [],
+			callback: () => {
+				return self.noPlayMode
+			},
+		},
 	} satisfies CompanionFeedbackDefinitions)
 }
