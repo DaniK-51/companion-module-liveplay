@@ -1,8 +1,4 @@
-import type {
-	CompanionActionSchema,
-	CompanionOptionValues,
-	SomeCompanionActionInputField,
-} from '@companion-module/base'
+import type { CompanionOptionValues, SomeCompanionActionInputField } from '@companion-module/base'
 import { TransportState } from './websocket-client.js'
 import type ModuleInstance from './main.js'
 
@@ -88,7 +84,19 @@ function cueOptions(): SomeCompanionActionInputField[] {
 	]
 }
 
-export type ActionsSchema = Record<string, CompanionActionSchema<CompanionOptionValues>>
+export type ActionsSchema = {
+	play_cue: { options: CueLookupOptions }
+	stop_cue: { options: CueLookupOptions }
+	pause_cue: { options: CueLookupOptions }
+	resume_cue: { options: CueLookupOptions }
+	toggle_cue: { options: CueLookupOptions }
+	toggle_pause_cue: { options: CueLookupOptions }
+	seek_cue: { options: CueLookupOptions & { seconds: number } }
+	set_cue_gain: { options: CueLookupOptions & { db: number } }
+	set_cue_fade: { options: CueLookupOptions & { inMs: number; outMs: number } }
+	stop_all: { options: Record<string, never> }
+	set_master_gain: { options: { db: number } }
+}
 
 export function UpdateActions(self: ModuleInstance): void {
 	self.setActionDefinitions({
@@ -96,7 +104,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			name: 'Play Cue',
 			options: cueOptions(),
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 				self.webSocketClient?.send({ type: 'play', ...target })
@@ -106,7 +114,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			name: 'Stop Cue',
 			options: cueOptions(),
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 				self.webSocketClient?.send({ type: 'stop', ...target })
@@ -116,7 +124,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			name: 'Pause Cue',
 			options: cueOptions(),
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 				self.webSocketClient?.send({ type: 'pause', ...target })
@@ -126,7 +134,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			name: 'Resume Cue',
 			options: cueOptions(),
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 				self.webSocketClient?.send({ type: 'resume', ...target })
@@ -136,7 +144,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			name: 'Toggle Play/Stop',
 			options: cueOptions(),
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 
@@ -158,7 +166,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			name: 'Toggle Pause/Resume',
 			options: cueOptions(),
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 
@@ -182,7 +190,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions & { seconds: number }
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 				self.webSocketClient?.send({ type: 'seek', ...target, seconds: opts.seconds })
@@ -202,7 +210,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions & { db: number }
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 				self.webSocketClient?.send({ type: 'gain', ...target, db: opts.db })
@@ -230,7 +238,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: (event) => {
-				const opts = event.options as unknown as CueLookupOptions & { inMs: number; outMs: number }
+				const opts = event.options
 				const target = resolveCue(self, opts)
 				if (!target) return
 				self.webSocketClient?.send({ type: 'fade', ...target, in_ms: opts.inMs, out_ms: opts.outMs })
@@ -256,7 +264,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: (event) => {
-				void self.apiClient?.setMasterGain(event.options.db as number)
+				void self.apiClient?.setMasterGain(event.options.db)
 			},
 		},
 	})

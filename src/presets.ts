@@ -97,7 +97,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		],
 	}
 
-	// Preset 2: Assign & Toggle (uses internal Local Variable: Set value action)
+	// Preset 2: Assign & Toggle (uses internal:localVariableSet to write selected UUID)
 	presets['assign_and_toggle'] = {
 		type: 'simple',
 		name: 'Assign & Toggle',
@@ -117,12 +117,11 @@ export function UpdatePresets(self: ModuleInstance): void {
 		steps: [
 			{
 				down: [
-					// Internal action: write selected_item_uuid to $(local:cue_id)
+					// Internal action: write selected_item_uuid to local variable 'cue_id'
 					{
-						actionId: 'set_variable_value',
+						actionId: 'internal:localVariableSet',
 						options: {
-							location: '$(this:page)/$(this:row)/$(this:column)',
-							variable: 'cue_id',
+							name: 'cue_id',
 							value: '$(liveplay:selected_item_uuid)',
 						},
 					},
