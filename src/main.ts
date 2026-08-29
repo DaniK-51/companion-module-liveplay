@@ -199,6 +199,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				'no_play_assigned',
 				'preview_mode_active',
 				'preview_mode_assigned',
+				'cue_is_next',
 			)
 		}
 

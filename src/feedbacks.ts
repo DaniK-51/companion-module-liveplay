@@ -215,5 +215,38 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				return !!opts.cueId
 			},
 		},
+		cue_is_next: {
+			name: 'Cue Is Next',
+			type: 'boolean',
+			defaultStyle: {
+				bgcolor: 0x00ccff,
+				color: 0x000000,
+			},
+			options: cueOptions(),
+			callback: (feedback) => {
+				const opts = feedback.options as unknown as CueLookupOptions
+				if (!opts.cueId) return false
+
+				let uuid: string | undefined
+				switch (opts.lookupMode) {
+					case 'uuid':
+						uuid = opts.cueId
+						break
+					case 'cue_id':
+						uuid = self.state.cueIdToUuid.get(opts.cueId)
+						break
+					case 'index': {
+						const item = self.state.findItemByIndex(opts.cueId)
+						uuid = item?.uuid
+						break
+					}
+					case 'selected':
+						uuid = self.state.selectedItemUuid ?? undefined
+						break
+				}
+
+				return uuid ? self.state.nextItemUuid === uuid : false
+			},
+		},
 	} satisfies CompanionFeedbackDefinitions)
 }

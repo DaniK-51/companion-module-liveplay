@@ -118,6 +118,9 @@ export type ActionsSchema = {
 	play_cue_preview: { options: CueLookupOptions }
 	stop_cue_preview: { options: Record<string, never> }
 	toggle_cue_preview: { options: CueLookupOptions }
+	set_next_item: { options: CueLookupOptions }
+	toggle_next_item: { options: CueLookupOptions }
+	reset_next_item: { options: Record<string, never> }
 }
 
 export function UpdateActions(self: ModuleInstance): void {
@@ -341,6 +344,48 @@ export function UpdateActions(self: ModuleInstance): void {
 				} else {
 					void self.apiClient?.startPreview(uuid)
 				}
+			},
+		},
+		set_next_item: {
+			name: 'Set Next Item',
+			description: 'Set a cue as the "Up Next" target',
+			options: cueOptions(),
+			callback: (event) => {
+				const opts = event.options
+				const target = resolveCue(self, opts)
+				if (!target?.item_uuid) {
+					self.log('warn', 'Set Next: no item resolved')
+					return
+				}
+				self.webSocketClient?.send({ type: 'set_next_item', item_uuid: target.item_uuid })
+			},
+		},
+		toggle_next_item: {
+			name: 'Toggle Next Item',
+			description: 'Toggle a cue as "Up Next" (set if not next, clear if already next)',
+			options: cueOptions(),
+			callback: (event) => {
+				const opts = event.options
+				const target = resolveCue(self, opts)
+				if (!target?.item_uuid) {
+					self.log('warn', 'Toggle Next: no item resolved')
+					return
+				}
+
+				// If this item is already next, clear it
+				if (self.state.nextItemUuid === target.item_uuid) {
+					self.webSocketClient?.send({ type: 'set_next_item', item_uuid: '' })
+				} else {
+					self.webSocketClient?.send({ type: 'set_next_item', item_uuid: target.item_uuid })
+				}
+			},
+		},
+		reset_next_item: {
+			name: 'Reset Next Item',
+			description: 'Clear the "Up Next" target',
+			options: [],
+			callback: () => {
+				self.webSocketClient?.send({ type: 'set_next_item', item_uuid: '' })
 			},
 		},
 	})
