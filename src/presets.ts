@@ -97,7 +97,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		],
 	}
 
-	// Preset 2: Assign & Toggle (uses internal:localVariableSet to write selected UUID)
+	// Preset 2: Assign & Toggle (assign on first press, toggle after)
 	presets['assign_and_toggle'] = {
 		type: 'simple',
 		name: 'Assign & Toggle',
@@ -117,20 +117,38 @@ export function UpdatePresets(self: ModuleInstance): void {
 		steps: [
 			{
 				down: [
-					// Internal action: write selected_item_uuid to local variable 'cue_id'
 					{
-						actionId: 'internal:localVariableSet',
-						options: {
-							name: 'cue_id',
-							value: '$(liveplay:selected_item_uuid)',
-						},
-					},
-					// Then toggle that cue
-					{
-						actionId: 'toggle_cue',
-						options: {
-							lookupMode: 'uuid',
-							cueId: '$(local:cue_id)',
+						actionId: 'internal:logicIf',
+						options: {},
+						children: {
+							condition: [
+								{
+									feedbackId: 'internal:checkExpression',
+									options: {
+										expression: "$(local:cue_id) != ''",
+									},
+								},
+							],
+							actions: [
+								// Already assigned → toggle play/stop
+								{
+									actionId: 'toggle_cue',
+									options: {
+										lookupMode: 'uuid',
+										cueId: '$(local:cue_id)',
+									},
+								},
+							],
+							elseActions: [
+								// Not assigned → capture selected UUID
+								{
+									actionId: 'internal:localVariableSet',
+									options: {
+										name: 'cue_id',
+										value: '$(liveplay:selected_item_uuid)',
+									},
+								},
+							],
 						},
 					},
 				],
