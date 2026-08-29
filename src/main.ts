@@ -194,6 +194,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				'cue_is_paused',
 				'cue_is_stopped',
 				'cue_ready_to_assign',
+				'no_play_active',
+				'no_play_assigned',
 			)
 		}
 
