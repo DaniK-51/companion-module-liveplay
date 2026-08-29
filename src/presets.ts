@@ -24,40 +24,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 				},
 			],
 		},
-		{
-			id: 'show_layout',
-			name: 'Show Layout (3×5)',
-			description: 'Pre-built 3×5 page with navigation',
-			definitions: [
-				{
-					id: 'nav_column',
-					name: 'Navigation',
-					type: 'simple',
-					presets: ['nav_stop_all', 'nav_no_play', 'nav_placeholder'],
-				},
-				{
-					id: 'cue_grid',
-					name: 'Cue Grid (3×4)',
-					type: 'template',
-					presetId: 'assign_and_toggle',
-					templateVariableName: 'grid_slot',
-					templateValues: [
-						{ name: '1', value: 1 },
-						{ name: '2', value: 2 },
-						{ name: '3', value: 3 },
-						{ name: '4', value: 4 },
-						{ name: '5', value: 5 },
-						{ name: '6', value: 6 },
-						{ name: '7', value: 7 },
-						{ name: '8', value: 8 },
-						{ name: '9', value: 9 },
-						{ name: '10', value: 10 },
-						{ name: '11', value: 11 },
-						{ name: '12', value: 12 },
-					],
-				},
-			],
-		},
 	]
 
 	const presets: CompanionPresetDefinitions<ModuleSchema> = {}
@@ -83,11 +49,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 				variableName: 'cue_name',
 				variableType: 'simple',
 				startupValue: 'Assign',
-			},
-			{
-				variableName: 'grid_slot',
-				variableType: 'simple',
-				startupValue: 0,
 			},
 		],
 		steps: [
@@ -191,34 +152,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 		feedbacks: [
 			{ feedbackId: 'no_play_active', options: {}, style: { bgcolor: 0xff8800, color: 0x000000, text: 'SETUP' } },
 		],
-	}
-
-	// === Navigation Column Presets ===
-
-	presets['nav_stop_all'] = {
-		type: 'simple',
-		name: 'Stop All',
-		style: { text: '⏹', size: '44', color: 0xffffff, bgcolor: 0xff0000 },
-		steps: [{ down: [{ actionId: 'stop_all', options: {} }], up: [] }],
-		feedbacks: [{ feedbackId: 'any_cue_playing', options: {}, style: { bgcolor: 0xff0000, color: 0xffffff } }],
-	}
-
-	presets['nav_no_play'] = {
-		type: 'simple',
-		name: 'Setup Mode',
-		style: { text: 'Setup', size: '18', color: 0xffffff, bgcolor: 0x333333 },
-		steps: [{ down: [{ actionId: 'toggle_no_play', options: {} }], up: [] }],
-		feedbacks: [
-			{ feedbackId: 'no_play_active', options: {}, style: { bgcolor: 0xff8800, color: 0x000000, text: 'SETUP' } },
-		],
-	}
-
-	presets['nav_placeholder'] = {
-		type: 'simple',
-		name: 'Reserved',
-		style: { text: '...', size: '18', color: 0x666666, bgcolor: 0x1a1a1a },
-		steps: [{ down: [], up: [] }],
-		feedbacks: [],
 	}
 
 	self.setPresetDefinitions(structure, presets)
