@@ -212,7 +212,10 @@ export function UpdatePresets(self: ModuleInstance): void {
 		type: 'simple',
 		name: 'Preview Mode',
 		style: {
-			text: '$(liveplay:preview_item_name)',
+			text: {
+				isExpression: true,
+				value: '$(liveplay:preview_item_name) == "" ? "Preview" : $(liveplay:preview_item_name)',
+			} as any,
 			size: '14',
 			color: 0xffffff,
 			bgcolor: 0x333333,
@@ -225,7 +228,10 @@ export function UpdatePresets(self: ModuleInstance): void {
 				style: {
 					bgcolor: 0x9933ff,
 					color: 0xffffff,
-					text: '$(liveplay:preview_item_name)',
+					text: {
+						isExpression: true,
+						value: '$(liveplay:preview_item_name) == "" ? "PREVIEW" : $(liveplay:preview_item_name)',
+					} as any,
 				},
 			},
 		],
@@ -235,7 +241,10 @@ export function UpdatePresets(self: ModuleInstance): void {
 		type: 'simple',
 		name: 'Next Mode',
 		style: {
-			text: '$(liveplay:next_item_name)',
+			text: {
+				isExpression: true,
+				value: '$(liveplay:next_item_name) == "" ? "Next" : $(liveplay:next_item_name)',
+			} as any,
 			size: '14',
 			color: 0xffffff,
 			bgcolor: 0x333333,
@@ -248,7 +257,10 @@ export function UpdatePresets(self: ModuleInstance): void {
 				style: {
 					bgcolor: 0x00ccff,
 					color: 0x000000,
-					text: '$(liveplay:next_item_name)',
+					text: {
+						isExpression: true,
+						value: '$(liveplay:next_item_name) == "" ? "NEXT" : $(liveplay:next_item_name)',
+					} as any,
 				},
 			},
 		],
