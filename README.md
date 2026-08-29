@@ -7,9 +7,10 @@ Bitfocus Companion module for [LivePlay](https://github.com/tdoukinitsas/livepla
 - **Cue Control**: Play, stop, pause, resume, seek, toggle
 - **Three Lookup Modes**: By UUID, engine cue ID, or playlist index
 - **Learn-to-Assign**: Select a cue in LivePlay, press Learn in Companion
+- **Mode System**: No-Play (setup), Preview (pre-listen), Next (up next)
 - **Real-time Feedback**: Transport state, meters, selection tracking
-- **22 Variables**: Player state, cue metadata, meters, project info
-- **7 Feedbacks**: Connection, transport state, cue-specific, assignment ready
+- **22+ Variables**: Player state, cue metadata, meters, project info
+- **Layered Presets**: Expression-driven button text for dynamic labels
 
 ## Getting Started
 
@@ -19,7 +20,10 @@ yarn build        # Build for development
 yarn package      # Build for Companion (creates pkg/ + .tgz)
 ```
 
-Copy `pkg/liveplay` to your Companion modules directory.
+Copy `pkg/liveplay` to your Companion modules directory:
+
+- Windows: `%APPDATA%/companion/modules/`
+- Linux: `~/.companion/modules/`
 
 ## Documentation
 

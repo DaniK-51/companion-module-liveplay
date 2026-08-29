@@ -36,11 +36,12 @@ The LivePlay Companion module provides control over LivePlay, an open-source aud
 
 ### Cue Controls
 
-All cue actions support three lookup modes:
+All cue actions support four lookup modes:
 
 - **By UUID**: Use the item's UUID from the project
 - **By Engine Cue ID**: Use the engine-level cue ID
 - **By Index**: Use zero-based index path (e.g., `0`, `1,3`, `2/5`)
+- **Selected in LivePlay**: Use the currently selected item in LivePlay UI
 
 | Action                  | Description                       |
 | ----------------------- | --------------------------------- |
@@ -61,6 +62,30 @@ All cue actions support three lookup modes:
 | **Stop All**        | Stop all playing cues         |
 | **Set Master Gain** | Set master output volume (dB) |
 
+### Preview Controls
+
+| Action                 | Description                                  |
+| ---------------------- | -------------------------------------------- |
+| **Play Cue Preview**   | Start preview playback (DJ-style pre-listen) |
+| **Stop Cue Preview**   | Stop preview playback                        |
+| **Toggle Cue Preview** | Toggle preview for a cue                     |
+
+### Next Item Controls
+
+| Action               | Description                   |
+| -------------------- | ----------------------------- |
+| **Set Next Item**    | Set a cue as "Up Next" target |
+| **Toggle Next Item** | Toggle next status            |
+| **Reset Next Item**  | Clear the "Up Next" target    |
+
+### Mode Controls
+
+| Action                  | Description                              |
+| ----------------------- | ---------------------------------------- |
+| **Toggle No-Play Mode** | Switch setup mode (assign/unassign only) |
+| **Toggle Preview Mode** | Switch preview mode (pre-listen)         |
+| **Toggle Next Mode**    | Switch next mode (set up next)           |
+
 ## Feedbacks
 
 ### Connection
@@ -78,14 +103,26 @@ All cue actions support three lookup modes:
 
 ### Cue-Specific
 
-All cue feedbacks support the same three lookup modes as actions.
+All cue feedbacks support the same four lookup modes as actions.
 
-| Feedback                | Description                                                     |
-| ----------------------- | --------------------------------------------------------------- |
-| **Cue Is Playing**      | True when specific cue is playing                               |
-| **Cue Is Paused**       | True when specific cue is paused                                |
-| **Cue Is Stopped**      | True when specific cue is stopped                               |
-| **Cue Ready to Assign** | True when cue is not assigned and a cue is selected in LivePlay |
+| Feedback                | Description                                         |
+| ----------------------- | --------------------------------------------------- |
+| **Cue Is Playing**      | True when specific cue is playing                   |
+| **Cue Is Paused**       | True when specific cue is paused                    |
+| **Cue Is Stopped**      | True when specific cue is stopped                   |
+| **Cue Is Next**         | True when cue is the "Up Next" target               |
+| **Cue Ready to Assign** | True when cue is not assigned and a cue is selected |
+
+### Mode Feedbacks
+
+| Feedback                  | Description                                    |
+| ------------------------- | ---------------------------------------------- |
+| **No-Play Mode Active**   | True when no-play mode is on                   |
+| **No-Play Assigned**      | True when no-play on + button has assigned cue |
+| **Preview Mode Active**   | True when preview mode is on                   |
+| **Preview Mode Assigned** | True when preview on + button has assigned cue |
+| **Next Mode Active**      | True when next mode is on                      |
+| **Next Mode Assigned**    | True when next on + button has assigned cue    |
 
 ## Variables
 
@@ -117,7 +154,16 @@ All cue feedbacks support the same three lookup modes as actions.
 | Variable             | Description                            |
 | -------------------- | -------------------------------------- |
 | `next_item_uuid`     | Next item UUID                         |
+| `next_item_name`     | Next item display name                 |
 | `selected_item_uuid` | Currently selected item in LivePlay UI |
+| `selected_item_name` | Selected item display name             |
+
+### Preview
+
+| Variable            | Description               |
+| ------------------- | ------------------------- |
+| `preview_item_uuid` | Preview item UUID         |
+| `preview_item_name` | Preview item display name |
 
 ### Meters
 
@@ -136,40 +182,65 @@ All cue feedbacks support the same three lookup modes as actions.
 | `project_name`       | Loaded project name        |
 | `project_item_count` | Number of items in project |
 
+### Mode State
+
+| Variable       | Description                |
+| -------------- | -------------------------- |
+| `no_play_mode` | No-play mode (0=off, 1=on) |
+| `preview_mode` | Preview mode (0=off, 1=on) |
+| `next_mode`    | Next mode (0=off, 1=on)    |
+
 ## Presets
 
-### Play / Stop Cue (Learn)
+### Assign & Toggle
 
-A preset with learn-to-assign workflow:
+The main preset for controlling cues:
 
-1. Add the preset to a button
-2. Select a cue in LivePlay (click on it in the playlist)
-3. The button lights up green with "Learn" text
-4. Press "Learn" in Companion (right-click → Learn)
-5. The cue is now assigned to the button
-6. Button toggles play/stop for the assigned cue
+- **Short press (unassigned)**: Capture selected cue from LivePlay
+- **Short press (assigned)**: Action depends on active mode:
+  - Normal: Toggle play/stop
+  - No-Play: Reset assignment
+  - Preview: Toggle preview
+  - Next: Toggle "Up Next"
+- **Long press (1s)**: Stop cue and reset assignment
+
+### Stop All
+
+Red button that stops all playing cues.
+
+### No-Play Mode
+
+Toggle setup mode. When active, assigned buttons glow blue and pressing resets them.
+
+### Preview Mode
+
+Toggle preview mode. When active, assigned buttons glow purple and play through preview device. Shows song name when preview is active.
+
+### Next Mode
+
+Toggle next mode. When active, assigned buttons glow cyan and set as "Up Next". Shows song name when next is set.
 
 ## Usage Examples
 
 ### Basic Playback Control
 
-1. Create a button with "Toggle Play/Stop" action
-2. Set lookup mode to "By UUID" and enter the cue UUID
-3. Add "Cue Is Playing" feedback with green color
-4. Add "Cue Is Paused" feedback with yellow color
+1. Add "Assign & Toggle" preset to buttons
+2. Select a cue in LivePlay
+3. Press button to assign
+4. Press again to toggle play/stop
 
-### Learn-to-Assign Workflow
+### Setup Workflow
 
-1. Add "Play / Stop Cue (Learn)" preset to a button
-2. In LivePlay, click on the cue you want to control
-3. In Companion, right-click the button and select "Learn"
-4. The cue is now assigned and the button toggles playback
+1. Press "No-Play Mode" to enter setup
+2. Select cues in LivePlay and assign to buttons
+3. Assigned buttons glow blue
+4. Press "No-Play Mode" again to exit setup
 
-### Index-Based Control
+### Preview Workflow
 
-1. Use "By Index" lookup mode
-2. Enter index path: `0` for first item, `1,3` for nested items
-3. Useful when UUIDs change but playlist order stays the same
+1. Press "Preview Mode" to enter preview
+2. Press assigned buttons to preview through separate device
+3. Button shows song name during preview
 
 ## Troubleshooting
 
@@ -178,13 +249,6 @@ A preset with learn-to-assign workflow:
 - **Cannot connect to server**: Check IP address and port
 - **Connection timeout**: Increase timeout in configuration
 - **Server unreachable**: Check network connectivity and firewall
-- **Module shows "Connecting"**: Server may be starting up, wait a moment
-
-### Project Issues
-
-- **Project won't load**: Verify project file exists and is accessible
-- **Cues not found**: Check if cues are properly loaded in LivePlay
-- **Missing media**: Ensure media files are in correct location
 
 ### Performance Issues
 

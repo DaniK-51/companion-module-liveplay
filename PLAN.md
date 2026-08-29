@@ -32,7 +32,8 @@ LivePlay Server (port 4480)
 │   ├── /api/project → full project document
 │   ├── /api/cues → engine cue list
 │   ├── /api/mixers → mixer channels
-│   └── /api/devices → audio devices
+│   ├── /api/devices → audio devices
+│   └── /api/preview → preview control
 │
 └── WebSocket (/ws)
     ├── playback_snapshot → on connect (full state sync)
@@ -58,6 +59,7 @@ LivePlay Server (port 4480)
 - [x] Sync project structure (items, groups, cart)
 - [x] Handle project state changes via doc_patch
 - [x] Incremental updates (item_added, item_updated, item_removed, items_reordered)
+- [x] Selection tracking (doc_patch + playback_snapshot)
 
 ### Phase 3: Cue Control System ✅
 
@@ -69,34 +71,65 @@ LivePlay Server (port 4480)
 - [x] Set cue fade times
 - [x] Stop all cues
 - [x] Set master gain
-- [x] Three lookup modes: UUID, cue_id, index
+- [x] Four lookup modes: UUID, cue_id, index, selected
 
 ### Phase 4: Feedback System ✅
 
 - [x] Connection status feedback
 - [x] Any cue playing/paused feedbacks
 - [x] Cue-specific playing/paused/stopped feedbacks
-- [x] Cue ready to assign feedback (for learn workflow)
+- [x] Cue ready to assign feedback
+- [x] Cue is next feedback
+- [x] Mode feedbacks (no_play, preview, next active/assigned)
 
 ### Phase 5: Variable System ✅
 
 - [x] Player state variables (state, position, progress)
 - [x] Current cue metadata (id, uuid, name, artist, title, duration)
-- [x] Selection tracking (selected_item_uuid)
+- [x] Selection tracking (selected_item_uuid, selected_item_name)
+- [x] Preview tracking (preview_item_uuid, preview_item_name)
+- [x] Next item tracking (next_item_uuid, next_item_name)
 - [x] Meter variables (master/mixer peak, RMS, gain reduction)
 - [x] Project variables (name, item count)
+- [x] Mode variables (no_play_mode, preview_mode, next_mode)
 
-### Phase 6: Advanced Features ⬜ Not Started
+### Phase 6: Preview System ✅
+
+- [x] Start/stop preview via REST API
+- [x] Toggle preview action
+- [x] Preview mode toggle
+- [x] Preview state tracking from doc_patch and playback_snapshot
+- [x] Preview item name variable
+
+### Phase 7: Next Item System ✅
+
+- [x] Set/toggle/reset next item via WebSocket
+- [x] Next mode toggle
+- [x] Next item tracking from playback_snapshot and doc_patch
+- [x] Next item name variable
+
+### Phase 8: Mode System ✅
+
+- [x] No-Play mode (assign/unassign only)
+- [x] Preview mode (pre-listen)
+- [x] Next mode (set up next)
+- [x] Mode toggle actions
+- [x] Mode feedbacks with color coding
+- [x] Assign & Toggle preset with mode-aware logic
+
+### Phase 9: Presets ✅
+
+- [x] Assign & Toggle preset (layered logic with modes)
+- [x] Stop All preset
+- [x] No-Play Mode preset
+- [x] Preview Mode preset (layered with expression text)
+- [x] Next Mode preset (layered with expression text)
+
+### Phase 10: Advanced Features ⬜ Not Started
 
 - [ ] Routing control (item→mixer, mixer→master, master→device)
 - [ ] Mixer control (create/destroy, volume, mute/solo)
 - [ ] Cart system (set/clear/play cart slots)
-- [ ] Preview system (start/stop preview)
-
-### Phase 7: Presets ✅
-
-- [x] Play/Stop Cue preset with learn-to-assign
-- [x] Feedback styling (green=playing, yellow=paused, red=stopped)
 
 ## Key Design Decisions
 
@@ -124,7 +157,12 @@ LivePlay Server (port 4480)
 
 - Via `playback_snapshot.selected_item_uuid` (on connect)
 - Via `doc_patch { op: "selection_changed" }` (on UI click)
-- NOT via meters frame (unnecessary 60Hz for infrequent changes)
+
+### Mode System
+
+- Module properties: `noPlayMode`, `previewMode`, `nextMode`
+- Module variables: `no_play_mode`, `preview_mode`, `next_mode`
+- Only one mode active at a time (user toggles between them)
 
 ## LivePlay API Reference
 
@@ -158,6 +196,8 @@ LivePlay Server (port 4480)
 | `selection_changed`   | UI selection changed    |
 | `master_gain_changed` | Master gain changed     |
 | `next_item_set`       | Next item changed       |
+| `preview_started`     | Preview started         |
+| `preview_stopped`     | Preview stopped         |
 
 ## Build & Package
 
