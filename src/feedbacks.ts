@@ -171,5 +171,21 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				return self.noPlayMode
 			},
 		},
+		no_play_assigned: {
+			name: 'No-Play Mode: Assigned (Blue)',
+			type: 'boolean',
+			defaultStyle: {
+				bgcolor: 0x0066ff,
+				color: 0xffffff,
+			},
+			options: cueOptions(),
+			callback: (feedback) => {
+				// Only active when no-play mode is ON
+				if (!self.noPlayMode) return false
+				// Only when button has an assigned cue
+				const opts = feedback.options as unknown as CueLookupOptions
+				return !!opts.cueId
+			},
+		},
 	} satisfies CompanionFeedbackDefinitions)
 }

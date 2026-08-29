@@ -163,6 +163,17 @@ export function UpdatePresets(self: ModuleInstance): void {
 				},
 			},
 			{
+				feedbackId: 'no_play_assigned',
+				options: {
+					lookupMode: 'uuid',
+					cueId: '$(local:cue_id)',
+				},
+				style: {
+					bgcolor: 0x0066ff,
+					color: 0xffffff,
+				},
+			},
+			{
 				feedbackId: 'cue_is_playing',
 				options: {
 					lookupMode: 'uuid',
