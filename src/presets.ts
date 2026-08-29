@@ -5,22 +5,22 @@ import type { CompanionPresetDefinitions, CompanionPresetSection } from '@compan
 export function UpdatePresets(self: ModuleInstance): void {
 	const structure: CompanionPresetSection[] = [
 		{
-			id: 'playback',
-			name: 'Playback',
+			id: 'quick_actions',
+			name: 'Quick Actions',
 			definitions: [
 				{
 					id: 'cue_controls',
 					name: 'Cue Controls',
-					description: 'Play/Stop toggle with learn-to-assign',
-					type: 'simple',
-					presets: ['play_stop_cue'],
-				},
-				{
-					id: 'assign_controls',
-					name: 'Assign & Toggle',
-					description: 'Assign selected cue to button, then toggle',
+					description: 'Assign and control individual cues',
 					type: 'simple',
 					presets: ['assign_and_toggle'],
+				},
+				{
+					id: 'transport_controls',
+					name: 'Transport',
+					description: 'Global transport controls',
+					type: 'simple',
+					presets: ['stop_all'],
 				},
 			],
 		},
@@ -28,76 +28,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 
 	const presets: CompanionPresetDefinitions<ModuleSchema> = {}
 
-	// Preset 1: Learn-to-assign (existing)
-	presets['play_stop_cue'] = {
-		type: 'simple',
-		name: 'Play / Stop Cue (Learn)',
-		style: {
-			text: '',
-			size: 'auto',
-			color: 0xffffff,
-			bgcolor: 0x000000,
-		},
-		localVariables: [
-			{
-				variableName: 'cue_id',
-				variableType: 'simple',
-				startupValue: '',
-			},
-		],
-		steps: [
-			{
-				down: [
-					{
-						actionId: 'toggle_cue',
-						options: {
-							lookupMode: 'uuid',
-							cueId: '$(local:cue_id)',
-						},
-					},
-				],
-				up: [],
-			},
-		],
-		feedbacks: [
-			{
-				feedbackId: 'cue_ready_to_assign',
-				options: {
-					lookupMode: 'uuid',
-					cueId: '$(local:cue_id)',
-				},
-				style: {
-					bgcolor: 0x00ff00,
-					color: 0x000000,
-					text: 'Learn',
-				},
-			},
-			{
-				feedbackId: 'cue_is_playing',
-				options: {
-					lookupMode: 'uuid',
-					cueId: '$(local:cue_id)',
-				},
-				style: {
-					bgcolor: 0x00ff00,
-					color: 0x000000,
-				},
-			},
-			{
-				feedbackId: 'cue_is_paused',
-				options: {
-					lookupMode: 'uuid',
-					cueId: '$(local:cue_id)',
-				},
-				style: {
-					bgcolor: 0xffff00,
-					color: 0x000000,
-				},
-			},
-		],
-	}
-
-	// Preset 2: Assign & Toggle (assign on first press, toggle after)
+	// Preset 1: Assign & Toggle
 	presets['assign_and_toggle'] = {
 		type: 'simple',
 		name: 'Assign & Toggle',
@@ -135,7 +66,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 								},
 							],
 							actions: [
-								// Already assigned → toggle play/stop
 								{
 									actionId: 'toggle_cue',
 									options: {
@@ -145,7 +75,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 								},
 							],
 							elseActions: [
-								// Not assigned → capture selected UUID and name
 								{
 									actionId: 'internal:localVariableSet',
 									options: {
@@ -165,11 +94,10 @@ export function UpdatePresets(self: ModuleInstance): void {
 					},
 				],
 				up: [],
-				// Long press (1s) → reset button to unassigned state
+				// Long press (1s) → reset to unassigned
 				1000: {
 					options: { runWhileHeld: false },
 					actions: [
-						// Stop the cue if it's playing
 						{
 							actionId: 'stop_cue',
 							options: {
@@ -177,7 +105,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 								cueId: '$(local:cue_id)',
 							},
 						},
-						// Clear cue_id
 						{
 							actionId: 'internal:localVariableSet',
 							options: {
@@ -185,7 +112,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 								value: '',
 							},
 						},
-						// Reset name to 'Assign'
 						{
 							actionId: 'internal:localVariableSet',
 							options: {
@@ -230,6 +156,39 @@ export function UpdatePresets(self: ModuleInstance): void {
 				style: {
 					bgcolor: 0xffff00,
 					color: 0x000000,
+				},
+			},
+		],
+	}
+
+	// Preset 2: Stop All
+	presets['stop_all'] = {
+		type: 'simple',
+		name: 'Stop All',
+		style: {
+			text: '⏹',
+			size: '44',
+			color: 0xffffff,
+			bgcolor: 0xff0000,
+		},
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'stop_all',
+						options: {},
+					},
+				],
+				up: [],
+			},
+		],
+		feedbacks: [
+			{
+				feedbackId: 'any_cue_playing',
+				options: {},
+				style: {
+					bgcolor: 0xff0000,
+					color: 0xffffff,
 				},
 			},
 		],
