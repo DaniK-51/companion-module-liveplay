@@ -211,13 +211,22 @@ export function UpdatePresets(self: ModuleInstance): void {
 	presets['preview_mode'] = {
 		type: 'simple',
 		name: 'Preview Mode',
-		style: { text: 'Preview', size: '14', color: 0xffffff, bgcolor: 0x333333 },
+		style: {
+			text: '$(liveplay:preview_item_name) == "" ? "Preview" : $(liveplay:preview_item_name)',
+			size: '14',
+			color: 0xffffff,
+			bgcolor: 0x333333,
+		},
 		steps: [{ down: [{ actionId: 'toggle_preview_mode', options: {} }], up: [] }],
 		feedbacks: [
 			{
 				feedbackId: 'preview_mode_active',
 				options: {},
-				style: { bgcolor: 0x9933ff, color: 0xffffff, text: '$(liveplay:preview_item_name)' },
+				style: {
+					bgcolor: 0x9933ff,
+					color: 0xffffff,
+					text: '$(liveplay:preview_item_name) == "" ? "PREVIEW" : $(liveplay:preview_item_name)',
+				},
 			},
 		],
 	}
@@ -225,13 +234,22 @@ export function UpdatePresets(self: ModuleInstance): void {
 	presets['next_mode'] = {
 		type: 'simple',
 		name: 'Next Mode',
-		style: { text: '$(liveplay:next_item_name)', size: '14', color: 0xffffff, bgcolor: 0x333333 },
+		style: {
+			text: '$(liveplay:next_item_name) == "" ? "Next" : $(liveplay:next_item_name)',
+			size: '14',
+			color: 0xffffff,
+			bgcolor: 0x333333,
+		},
 		steps: [{ down: [{ actionId: 'toggle_next_mode', options: {} }], up: [] }],
 		feedbacks: [
 			{
 				feedbackId: 'next_mode_active',
 				options: {},
-				style: { bgcolor: 0x00ccff, color: 0x000000, text: '$(liveplay:next_item_name)' },
+				style: {
+					bgcolor: 0x00ccff,
+					color: 0x000000,
+					text: '$(liveplay:next_item_name) == "" ? "NEXT" : $(liveplay:next_item_name)',
+				},
 			},
 		],
 	}
