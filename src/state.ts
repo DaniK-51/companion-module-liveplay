@@ -583,6 +583,13 @@ export class ModuleState {
 			activeCueCount: activeCount,
 			currentCueId: latestPlayingCueId,
 		}
+
+		// Compute auto-next from current cue's endBehavior
+		const currentUuid = latestPlayingCueId ? (this.cueIdToUuid.get(latestPlayingCueId) ?? '') : ''
+		const currentItem = currentUuid ? this.projectItems.get(currentUuid) : undefined
+		const endBehavior = currentItem?.endBehavior?.action ?? 'nothing'
+		this.autoNextItemUuid =
+			currentUuid && endBehavior === 'next' ? (this.findNextSibling(currentUuid)?.uuid ?? '') || null : null
 	}
 
 	// === Cleanup ===
