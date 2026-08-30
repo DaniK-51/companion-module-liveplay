@@ -76,22 +76,14 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 	})
 }
 
-const formatTime = (seconds: number): string => {
-	if (!isFinite(seconds) || seconds < 0) return '00:00'
-	const mins = Math.floor(seconds / 60)
-	const secs = Math.floor(seconds % 60)
-	return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-}
-
-const variableCache = new Map<string, string | number>()
-
-function setIfChanged(self: ModuleInstance, key: string, value: string | number): void {
-	if (variableCache.get(key) === value) return
-	variableCache.set(key, value)
-	self.setVariableValues({ [key]: value })
-}
-
 export function UpdateVariables(self: ModuleInstance): void {
+	const formatTime = (seconds: number): string => {
+		if (!isFinite(seconds) || seconds < 0) return '00:00'
+		const mins = Math.floor(seconds / 60)
+		const secs = Math.floor(seconds % 60)
+		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+	}
+
 	const s = self.state
 	const playerState = s.currentPlayerState
 
@@ -128,46 +120,40 @@ export function UpdateVariables(self: ModuleInstance): void {
 		mixerRmsDb = firstMixer.rmsDb
 	}
 
-	setIfChanged(self, 'player_state', playerState.state)
-	setIfChanged(self, 'player_position', playerState.position)
-	setIfChanged(self, 'player_position_formatted', formatTime(playerState.position))
-	setIfChanged(self, 'player_progress', playerState.progress)
-	setIfChanged(self, 'master_gain', playerState.masterGain)
-	setIfChanged(self, 'active_cue_count', playerState.activeCueCount)
-	setIfChanged(self, 'current_cue_id', currentCueId)
-	setIfChanged(self, 'current_cue_uuid', currentUuid)
-	setIfChanged(self, 'current_cue_name', currentCueName)
-	setIfChanged(self, 'current_cue_artist', currentCueArtist)
-	setIfChanged(self, 'current_cue_title', currentCueTitle)
-	setIfChanged(self, 'current_cue_duration', currentCueDuration)
-	setIfChanged(self, 'current_cue_duration_formatted', formatTime(currentCueDuration))
-	setIfChanged(self, 'next_item_uuid', s.nextItemUuid ?? '')
-	setIfChanged(self, 'selected_item_uuid', s.selectedItemUuid ?? '')
-	setIfChanged(
-		self,
-		'selected_item_name',
-		s.selectedItemUuid ? (s.projectItems.get(s.selectedItemUuid)?.displayName ?? '') : '',
-	)
-	setIfChanged(self, 'master_peak_db', masterPeakDb)
-	setIfChanged(self, 'master_rms_db', masterRmsDb)
-	setIfChanged(self, 'master_gain_reduction_db', masterGainReductionDb)
-	setIfChanged(self, 'mixer_peak_db', mixerPeakDb)
-	setIfChanged(self, 'mixer_rms_db', mixerRmsDb)
-	setIfChanged(self, 'project_name', s.projectName)
-	setIfChanged(self, 'project_item_count', s.projectItems.size)
-	setIfChanged(self, 'no_play_mode', self.activeMode === 'noPlay' ? 1 : 0)
-	setIfChanged(self, 'preview_mode', self.activeMode === 'preview' ? 1 : 0)
-	setIfChanged(self, 'next_mode', self.activeMode === 'next' ? 1 : 0)
-	setIfChanged(self, 'preview_item_uuid', s.previewItemUuid ?? '')
-	setIfChanged(
-		self,
-		'preview_item_name',
-		s.previewItemUuid ? (s.projectItems.get(s.previewItemUuid)?.displayName ?? '') : '',
-	)
-	setIfChanged(self, 'next_item_name', s.nextItemUuid ? (s.projectItems.get(s.nextItemUuid)?.displayName ?? '') : '')
-	setIfChanged(self, 'current_cue_end_behavior', currentCueEndBehavior)
-	setIfChanged(self, 'auto_next_item_uuid', autoNextUuid)
-	setIfChanged(self, 'auto_next_item_name', autoNextItem?.displayName ?? '')
-	setIfChanged(self, 'effective_next_item_uuid', effectiveNextUuid)
-	setIfChanged(self, 'effective_next_item_name', effectiveNextItem?.displayName ?? '')
+	self.setVariableValues({
+		player_state: playerState.state,
+		player_position: playerState.position,
+		player_position_formatted: formatTime(playerState.position),
+		player_progress: playerState.progress,
+		master_gain: playerState.masterGain,
+		active_cue_count: playerState.activeCueCount,
+		current_cue_id: currentCueId,
+		current_cue_uuid: currentUuid,
+		current_cue_name: currentCueName,
+		current_cue_artist: currentCueArtist,
+		current_cue_title: currentCueTitle,
+		current_cue_duration: currentCueDuration,
+		current_cue_duration_formatted: formatTime(currentCueDuration),
+		next_item_uuid: s.nextItemUuid ?? '',
+		selected_item_uuid: s.selectedItemUuid ?? '',
+		selected_item_name: s.selectedItemUuid ? (s.projectItems.get(s.selectedItemUuid)?.displayName ?? '') : '',
+		master_peak_db: masterPeakDb,
+		master_rms_db: masterRmsDb,
+		master_gain_reduction_db: masterGainReductionDb,
+		mixer_peak_db: mixerPeakDb,
+		mixer_rms_db: mixerRmsDb,
+		project_name: s.projectName,
+		project_item_count: s.projectItems.size,
+		no_play_mode: self.activeMode === 'noPlay' ? 1 : 0,
+		preview_mode: self.activeMode === 'preview' ? 1 : 0,
+		next_mode: self.activeMode === 'next' ? 1 : 0,
+		preview_item_uuid: s.previewItemUuid ?? '',
+		preview_item_name: s.previewItemUuid ? (s.projectItems.get(s.previewItemUuid)?.displayName ?? '') : '',
+		next_item_name: s.nextItemUuid ? (s.projectItems.get(s.nextItemUuid)?.displayName ?? '') : '',
+		current_cue_end_behavior: currentCueEndBehavior,
+		auto_next_item_uuid: autoNextUuid,
+		auto_next_item_name: autoNextItem?.displayName ?? '',
+		effective_next_item_uuid: effectiveNextUuid,
+		effective_next_item_name: effectiveNextItem?.displayName ?? '',
+	})
 }
