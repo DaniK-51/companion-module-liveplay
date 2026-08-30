@@ -85,10 +85,12 @@ LivePlay Server (port 4480)
 ### Phase 5: Variable System ✅
 
 - [x] Player state variables (state, position, progress)
-- [x] Current cue metadata (id, uuid, name, artist, title, duration)
+- [x] Current cue metadata (id, uuid, name, artist, title, duration, endBehavior)
 - [x] Selection tracking (selected_item_uuid, selected_item_name)
 - [x] Preview tracking (preview_item_uuid, preview_item_name)
 - [x] Next item tracking (next_item_uuid, next_item_name)
+- [x] Auto-next tracking (auto_next_item_uuid, auto_next_item_name)
+- [x] Effective next tracking (effective_next_item_uuid, effective_next_item_name)
 - [x] Meter variables (master/mixer peak, RMS, gain reduction)
 - [x] Project variables (name, item count)
 - [x] Mode variables (no_play_mode, preview_mode, next_mode)
@@ -107,6 +109,9 @@ LivePlay Server (port 4480)
 - [x] Next mode toggle
 - [x] Next item tracking from playback_snapshot and doc_patch
 - [x] Next item name variable
+- [x] Auto-next detection from endBehavior
+- [x] effective_next_item (manual takes priority over auto)
+- [x] Play Next preset with triangle icon
 
 ### Phase 8: Mode System ✅
 
@@ -119,11 +124,12 @@ LivePlay Server (port 4480)
 
 ### Phase 9: Presets ✅
 
-- [x] Assign & Toggle preset (layered logic with modes)
-- [x] Stop All preset
-- [x] No-Play Mode preset
-- [x] Preview Mode preset (layered with expression text)
-- [x] Next Mode preset (layered with expression text)
+- [x] Assign & Toggle preset (layered logic with modes + status indicators)
+- [x] Stop All preset (gray when idle, red when playing)
+- [x] No-Play Mode preset (unified transport style, fontsize 36)
+- [x] Preview Mode preset (unified transport style, fontsize 36)
+- [x] Next Mode preset (unified transport style, fontsize 36)
+- [x] Play Next preset (triangle icon, gray/cyan)
 
 ### Phase 10: Advanced Features ⬜ Not Started
 

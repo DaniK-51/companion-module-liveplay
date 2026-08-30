@@ -32,6 +32,47 @@ The LivePlay Companion module provides control over LivePlay, an open-source aud
 - **Red**: Connection failed or server unreachable
 - **Yellow**: Connecting or reconnecting
 
+## Presets
+
+### Assign & Toggle
+
+The main preset for controlling cues. Features three status indicator squares at the bottom:
+
+- **Green** (left): Cue is currently playing
+- **Purple** (center): Cue is in preview
+- **Cyan** (right): Cue is set as next (manual or auto)
+
+Button behavior:
+
+- **Short press (unassigned)**: Capture selected cue from LivePlay
+- **Short press (assigned)**: Action depends on active mode:
+  - Normal: Toggle play/stop
+  - No-Play: Reset assignment
+  - Preview: Toggle preview
+  - Next: Toggle "Up Next"
+- **Long press (1s)**: Stop cue and reset assignment
+
+### Transport Controls
+
+All transport buttons share a unified design with fontsize 36:
+
+| Preset        | Default         | Active            | Description                              |
+| ------------- | --------------- | ----------------- | ---------------------------------------- |
+| **Stop All**  | Gray, ⏹ icon    | Red background    | Stop all playing cues                    |
+| **Play Next** | Gray, ▶ icon    | Cyan background   | Play the next item (manual or auto-next) |
+| **Setup**     | Gray, "Setup"   | Orange background | Toggle no-play mode                      |
+| **Preview**   | Gray, "Preview" | Purple background | Toggle preview mode                      |
+| **Next**      | Gray, "Next"    | Cyan background   | Toggle next mode                         |
+
+### Play Next
+
+Plays the next item in sequence. Supports two sources:
+
+- **Manual next**: Set via "Toggle Next Item" action (takes priority)
+- **Auto-next**: Computed from the current cue's `endBehavior` setting
+
+When the current cue has `endBehavior: "next"`, the button automatically knows which item comes next.
+
 ## Actions
 
 ### Cue Controls
@@ -43,24 +84,24 @@ All cue actions support four lookup modes:
 - **By Index**: Use zero-based index path (e.g., `0`, `1,3`, `2/5`)
 - **Selected in LivePlay**: Use the currently selected item in LivePlay UI
 
-| Action                  | Description                       |
-| ----------------------- | --------------------------------- |
-| **Play Cue**            | Start playback of a cue           |
-| **Stop Cue**            | Stop playback of a cue            |
-| **Pause Cue**           | Pause a playing cue               |
-| **Resume Cue**          | Resume a paused cue               |
-| **Toggle Play/Stop**    | Toggle between play and stop      |
-| **Toggle Pause/Resume** | Toggle between pause and resume   |
-| **Seek Cue**            | Seek to position in cue (seconds) |
-| **Set Cue Gain**        | Set cue volume (dB, -60 to +20)   |
-| **Set Cue Fade**        | Set fade in/out times (ms)        |
+| Action                  | Description                                |
+| ----------------------- | ------------------------------------------ |
+| **Play Cue**            | Start playback of a cue                    |
+| **Stop Cue**            | Stop playback of a cue                     |
+| **Pause Cue**           | Pause a playing cue                        |
+| **Resume Cue**          | Resume a paused cue                        |
+| **Toggle Play/Stop**    | Start playback if stopped, stop if playing |
+| **Toggle Pause/Resume** | Pause if playing, resume if paused         |
+| **Seek Cue**            | Seek to a specific position in seconds     |
+| **Set Cue Gain**        | Set the gain level for a cue in dB         |
+| **Set Cue Fade**        | Set fade in/out durations for a cue        |
 
 ### Transport Controls
 
-| Action              | Description                   |
-| ------------------- | ----------------------------- |
-| **Stop All**        | Stop all playing cues         |
-| **Set Master Gain** | Set master output volume (dB) |
+| Action              | Description                      |
+| ------------------- | -------------------------------- |
+| **Stop All**        | Stop all currently playing cues  |
+| **Set Master Gain** | Set the master output gain in dB |
 
 ### Preview Controls
 
@@ -72,57 +113,51 @@ All cue actions support four lookup modes:
 
 ### Next Item Controls
 
-| Action               | Description                   |
-| -------------------- | ----------------------------- |
-| **Set Next Item**    | Set a cue as "Up Next" target |
-| **Toggle Next Item** | Toggle next status            |
-| **Reset Next Item**  | Clear the "Up Next" target    |
+| Action               | Description                                                        |
+| -------------------- | ------------------------------------------------------------------ |
+| **Set Next Item**    | Set a cue as the "Up Next" target                                  |
+| **Toggle Next Item** | Toggle a cue as "Up Next" (set if not next, clear if already next) |
+| **Reset Next Item**  | Clear the "Up Next" target                                         |
 
 ### Mode Controls
 
-| Action                  | Description                              |
-| ----------------------- | ---------------------------------------- |
-| **Toggle No-Play Mode** | Switch setup mode (assign/unassign only) |
-| **Toggle Preview Mode** | Switch preview mode (pre-listen)         |
-| **Toggle Next Mode**    | Switch next mode (set up next)           |
+| Action                  | Description                                             |
+| ----------------------- | ------------------------------------------------------- |
+| **Toggle No-Play Mode** | Switch between normal and no-play mode for button setup |
+| **Toggle Preview Mode** | Switch between normal and preview mode (pre-listen)     |
+| **Toggle Next Mode**    | Switch between normal and next mode (set Up Next)       |
 
 ## Feedbacks
 
-### Connection
-
-| Feedback                | Description                     |
-| ----------------------- | ------------------------------- |
-| **Connected to Server** | True when connected to LivePlay |
-
 ### Global State
 
-| Feedback            | Description                  |
-| ------------------- | ---------------------------- |
-| **Any Cue Playing** | True when any cue is playing |
-| **Any Cue Paused**  | True when any cue is paused  |
+| Feedback            | Description                    |
+| ------------------- | ------------------------------ |
+| **Any Cue Playing** | Active when any cue is playing |
+| **Any Cue Paused**  | Active when any cue is paused  |
 
 ### Cue-Specific
 
 All cue feedbacks support the same four lookup modes as actions.
 
-| Feedback                | Description                                         |
-| ----------------------- | --------------------------------------------------- |
-| **Cue Is Playing**      | True when specific cue is playing                   |
-| **Cue Is Paused**       | True when specific cue is paused                    |
-| **Cue Is Stopped**      | True when specific cue is stopped                   |
-| **Cue Is Next**         | True when cue is the "Up Next" target               |
-| **Cue Ready to Assign** | True when cue is not assigned and a cue is selected |
+| Feedback                | Description                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| **Cue Is Playing**      | Active when the specified cue is playing                       |
+| **Cue Is Paused**       | Active when the specified cue is paused                        |
+| **Cue Is Stopped**      | Active when the specified cue is stopped                       |
+| **Cue Is Next**         | Active when the cue is set as next (manual or auto-next)       |
+| **Cue Ready to Assign** | Active when no cue is assigned and one is selected in LivePlay |
 
 ### Mode Feedbacks
 
-| Feedback                  | Description                                    |
-| ------------------------- | ---------------------------------------------- |
-| **No-Play Mode Active**   | True when no-play mode is on                   |
-| **No-Play Assigned**      | True when no-play on + button has assigned cue |
-| **Preview Mode Active**   | True when preview mode is on                   |
-| **Preview Mode Assigned** | True when preview on + button has assigned cue |
-| **Next Mode Active**      | True when next mode is on                      |
-| **Next Mode Assigned**    | True when next on + button has assigned cue    |
+| Feedback                  | Description                                          |
+| ------------------------- | ---------------------------------------------------- |
+| **No-Play Mode Active**   | Active when no-play mode is enabled                  |
+| **No-Play Assigned**      | Active when no-play mode is on and a cue is assigned |
+| **Preview Mode Active**   | Active when preview mode is enabled                  |
+| **Preview Mode Assigned** | Active when preview mode is on and a cue is assigned |
+| **Next Mode Active**      | Active when next mode is enabled                     |
+| **Next Mode Assigned**    | Active when next mode is on and a cue is assigned    |
 
 ## Variables
 
@@ -139,24 +174,29 @@ All cue feedbacks support the same four lookup modes as actions.
 
 ### Current Cue
 
-| Variable                         | Description            |
-| -------------------------------- | ---------------------- |
-| `current_cue_id`                 | Engine cue ID          |
-| `current_cue_uuid`               | Item UUID              |
-| `current_cue_name`               | Display name           |
-| `current_cue_artist`             | Artist (from metadata) |
-| `current_cue_title`              | Title (from metadata)  |
-| `current_cue_duration`           | Duration (seconds)     |
-| `current_cue_duration_formatted` | Duration (MM:SS)       |
+| Variable                         | Description                                          |
+| -------------------------------- | ---------------------------------------------------- |
+| `current_cue_id`                 | Engine cue ID                                        |
+| `current_cue_uuid`               | Item UUID                                            |
+| `current_cue_name`               | Display name                                         |
+| `current_cue_artist`             | Artist (from metadata)                               |
+| `current_cue_title`              | Title (from metadata)                                |
+| `current_cue_duration`           | Duration (seconds)                                   |
+| `current_cue_duration_formatted` | Duration (MM:SS)                                     |
+| `current_cue_end_behavior`       | End behavior of current cue (next, loop, nothing...) |
 
 ### Selection & Navigation
 
-| Variable             | Description                            |
-| -------------------- | -------------------------------------- |
-| `next_item_uuid`     | Next item UUID                         |
-| `next_item_name`     | Next item display name                 |
-| `selected_item_uuid` | Currently selected item in LivePlay UI |
-| `selected_item_name` | Selected item display name             |
+| Variable                   | Description                                                  |
+| -------------------------- | ------------------------------------------------------------ |
+| `next_item_uuid`           | UUID of the manually set next item                           |
+| `next_item_name`           | Name of the manually set next item                           |
+| `selected_item_uuid`       | UUID of the item currently selected in LivePlay              |
+| `selected_item_name`       | Name of the item currently selected in LivePlay              |
+| `auto_next_item_uuid`      | UUID of the auto-next item based on endBehavior              |
+| `auto_next_item_name`      | Name of the auto-next item based on endBehavior              |
+| `effective_next_item_uuid` | UUID of the effective next (manual takes priority over auto) |
+| `effective_next_item_name` | Name of the effective next (manual takes priority over auto) |
 
 ### Preview
 
@@ -190,36 +230,6 @@ All cue feedbacks support the same four lookup modes as actions.
 | `preview_mode` | Preview mode (0=off, 1=on) |
 | `next_mode`    | Next mode (0=off, 1=on)    |
 
-## Presets
-
-### Assign & Toggle
-
-The main preset for controlling cues:
-
-- **Short press (unassigned)**: Capture selected cue from LivePlay
-- **Short press (assigned)**: Action depends on active mode:
-  - Normal: Toggle play/stop
-  - No-Play: Reset assignment
-  - Preview: Toggle preview
-  - Next: Toggle "Up Next"
-- **Long press (1s)**: Stop cue and reset assignment
-
-### Stop All
-
-Red button that stops all playing cues.
-
-### No-Play Mode
-
-Toggle setup mode. When active, assigned buttons glow blue and pressing resets them.
-
-### Preview Mode
-
-Toggle preview mode. When active, assigned buttons glow purple and play through preview device. Shows song name when preview is active.
-
-### Next Mode
-
-Toggle next mode. When active, assigned buttons glow cyan and set as "Up Next". Shows song name when next is set.
-
 ## Usage Examples
 
 ### Basic Playback Control
@@ -231,16 +241,31 @@ Toggle next mode. When active, assigned buttons glow cyan and set as "Up Next". 
 
 ### Setup Workflow
 
-1. Press "No-Play Mode" to enter setup
+1. Press "Setup" to enter no-play mode
 2. Select cues in LivePlay and assign to buttons
-3. Assigned buttons glow blue
-4. Press "No-Play Mode" again to exit setup
+3. Assigned buttons show green indicator
+4. Press "Setup" again to exit
 
 ### Preview Workflow
 
-1. Press "Preview Mode" to enter preview
+1. Press "Preview" to enter preview mode
 2. Press assigned buttons to preview through separate device
-3. Button shows song name during preview
+3. Purple indicator shows on previewing cue
+
+### Next Item Workflow
+
+**Manual next:**
+
+1. Press "Next" to enter next mode
+2. Press an assigned button to set it as "Up Next"
+3. Cyan indicator shows on the next cue
+4. Press "▶" (Play Next) to play it immediately
+
+**Auto-next:**
+
+- When a cue has `endBehavior: "next"`, the module automatically computes which item comes next
+- The "▶" button plays it when the current cue ends
+- Manual next always takes priority over auto-next
 
 ## Troubleshooting
 

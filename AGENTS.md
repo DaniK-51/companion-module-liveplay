@@ -98,6 +98,45 @@ cmd.exe /c "rmdir /s /q C:\\Users\\DaniK\\companion_modules\\companion-module-li
 yarn package
 ```
 
+### 6. Auto-Next Detection
+
+When a cue has `endBehavior.action === "next"`, the next item is the next sibling in the project tree. Use `state.findNextSibling(uuid)` to compute it.
+
+Priority: manual next (`nextItemUuid`) always overrides auto-next (`autoNextItemUuid`).
+
+```typescript
+// Effective next UUID
+const effectiveNextUuid = self.state.nextItemUuid || self.state.autoNextItemUuid
+```
+
+### 7. Status Indicators in Layered Presets
+
+Use small box elements positioned at the bottom of the button to show state:
+
+```typescript
+{
+    type: 'box',
+    id: 'indicator',
+    x: { isExpression: false, value: 2 },
+    y: { isExpression: false, value: 82 },
+    width: { isExpression: false, value: 12 },
+    height: { isExpression: false, value: 12 },
+    color: {
+        isExpression: true,
+        value: "$(local:cue_id) != '' && $(liveplay:current_cue_uuid) == $(local:cue_id) ? 0x00ff00 : 0x000000",
+    },
+}
+```
+
+### 8. `cue_is_next` Feedback Must Check Both Manual and Auto-Next
+
+```typescript
+if (!uuid) return false
+if (self.state.nextItemUuid === uuid) return true
+if (!self.state.nextItemUuid && self.state.autoNextItemUuid === uuid) return true
+return false
+```
+
 ## Project Architecture
 
 ### State Management
