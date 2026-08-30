@@ -30,6 +30,11 @@ export type VariablesSchema = {
 	preview_item_uuid: string
 	preview_item_name: string
 	next_item_name: string
+	current_cue_end_behavior: string
+	auto_next_item_uuid: string
+	auto_next_item_name: string
+	effective_next_item_uuid: string
+	effective_next_item_name: string
 }
 
 export function UpdateVariableDefinitions(self: ModuleInstance): void {
@@ -63,6 +68,11 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		preview_item_uuid: { name: 'Preview Item UUID' },
 		preview_item_name: { name: 'Preview Item Name' },
 		next_item_name: { name: 'Next Item Name' },
+		current_cue_end_behavior: { name: 'Current Cue End Behavior' },
+		auto_next_item_uuid: { name: 'Auto Next Item UUID' },
+		auto_next_item_name: { name: 'Auto Next Item Name' },
+		effective_next_item_uuid: { name: 'Effective Next Item UUID' },
+		effective_next_item_name: { name: 'Effective Next Item Name' },
 	})
 }
 
@@ -87,6 +97,14 @@ export function UpdateVariables(self: ModuleInstance): void {
 	const currentCueArtist = currentCue?.artist ?? ''
 	const currentCueTitle = currentCue?.title ?? ''
 	const currentCueDuration = currentCue?.durationSec ?? currentItem?.duration ?? 0
+	const currentCueEndBehavior = currentItem?.endBehavior?.action ?? 'nothing'
+	const autoNextUuid =
+		currentUuid && currentCueEndBehavior === 'next' ? (s.findNextSibling(currentUuid)?.uuid ?? '') : ''
+	const autoNextItem = autoNextUuid ? s.projectItems.get(autoNextUuid) : undefined
+
+	// Effective next: manual always takes priority over auto
+	const effectiveNextUuid = s.nextItemUuid || autoNextUuid
+	const effectiveNextItem = effectiveNextUuid ? s.projectItems.get(effectiveNextUuid) : undefined
 
 	// Get master meter values (default to channel 0)
 	const masterMeter = s.masterMeters.get(0)
@@ -133,5 +151,10 @@ export function UpdateVariables(self: ModuleInstance): void {
 		preview_item_uuid: s.previewItemUuid ?? '',
 		preview_item_name: s.previewItemUuid ? (s.projectItems.get(s.previewItemUuid)?.displayName ?? '') : '',
 		next_item_name: s.nextItemUuid ? (s.projectItems.get(s.nextItemUuid)?.displayName ?? '') : '',
+		current_cue_end_behavior: currentCueEndBehavior,
+		auto_next_item_uuid: autoNextUuid,
+		auto_next_item_name: autoNextItem?.displayName ?? '',
+		effective_next_item_uuid: effectiveNextUuid,
+		effective_next_item_name: effectiveNextItem?.displayName ?? '',
 	})
 }

@@ -521,6 +521,32 @@ export class ModuleState {
 	}
 
 	/**
+	 * Find the next sibling item in the same parent array.
+	 * Returns undefined if this is the last item or not found.
+	 */
+	findNextSibling(uuid: string): ProjectItem | undefined {
+		const item = this.projectItems.get(uuid)
+		if (!item) return undefined
+
+		// Walk the tree to find the parent array containing this item
+		const findInTree = (tree: ProjectItem[]): ProjectItem | undefined => {
+			for (let i = 0; i < tree.length; i++) {
+				if (tree[i].uuid === uuid) {
+					// Found it — return the next sibling if it exists
+					return i + 1 < tree.length ? tree[i + 1] : undefined
+				}
+				if (tree[i].children && tree[i].type === 'group') {
+					const found = findInTree(tree[i].children!)
+					if (found !== undefined) return found
+				}
+			}
+			return undefined
+		}
+
+		return findInTree(this.projectTree)
+	}
+
+	/**
 	 * Find a project item by its index path.
 	 * Accepts comma or slash separated zero-based indices.
 	 * Examples: "5" = 6th top-level item, "1,11" = top-level[1].children[11]
