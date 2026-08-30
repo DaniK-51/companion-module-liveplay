@@ -53,13 +53,13 @@ export class LivePlayWebSocket {
 		}
 
 		try {
-			this.log('info', `Connecting to ${this.wsUrl}`)
+			this.log('info', `[WS] Connecting to ${this.wsUrl}`)
 			this.ws = new WebSocket(this.wsUrl)
 
 			this.ws.onopen = () => {
 				this.isConnected = true
 				this.reconnectDelay = 1500 // reset backoff
-				this.log('info', 'WebSocket connected')
+				this.log('info', '[WS] Connected')
 				this.notifyConnectionHandlers(true)
 			}
 
@@ -68,7 +68,7 @@ export class LivePlayWebSocket {
 					const message = JSON.parse(event.data) as ServerMessage
 					this.handleMessage(message)
 				} catch (_error) {
-					this.log('error', 'Failed to parse WebSocket message')
+					this.log('error', '[WS] Failed to parse message')
 				}
 			}
 
@@ -77,18 +77,18 @@ export class LivePlayWebSocket {
 				this.isConnected = false
 				this.ws = null
 				if (wasConnected) {
-					this.log('warn', `WebSocket disconnected (code: ${event.code}, reason: ${event.reason})`)
+					this.log('warn', `[WS] Disconnected (code: ${event.code}, reason: ${event.reason})`)
 					this.notifyConnectionHandlers(false)
 				}
 				this.scheduleReconnect()
 			}
 
 			this.ws.onerror = () => {
-				this.log('error', 'WebSocket error')
+				this.log('error', '[WS] Connection error')
 				// onerror is followed by onclose; reconnection happens there
 			}
 		} catch (error) {
-			this.log('error', `Failed to create WebSocket: ${error}`)
+			this.log('error', `[WS] Failed to create connection: ${error}`)
 			this.scheduleReconnect()
 		}
 	}
@@ -96,7 +96,7 @@ export class LivePlayWebSocket {
 	private scheduleReconnect(): void {
 		if (this.isDestroyed || this.reconnectTimer) return
 
-		this.log('info', `Reconnecting in ${this.reconnectDelay}ms`)
+		this.log('info', `[WS] Reconnecting in ${this.reconnectDelay}ms`)
 		this.reconnectTimer = setTimeout(() => {
 			this.reconnectTimer = null
 			this.reconnectDelay = Math.min(this.reconnectDelay * 2, 10000) // exponential backoff, max 10s
@@ -129,7 +129,7 @@ export class LivePlayWebSocket {
 
 	private handleMessage(message: ServerMessage): void {
 		if (this.config.debugLogging) {
-			this.log('debug', `WS recv: ${message.type}`)
+			this.log('debug', `[WS] Received: ${message.type}`)
 		}
 
 		const handler = this.messageHandlers.get(message.type)
@@ -137,19 +137,19 @@ export class LivePlayWebSocket {
 			try {
 				handler(message)
 			} catch (_error) {
-				this.log('error', `Error in message handler for ${message.type}`)
+				this.log('error', `[WS] Error in handler for ${message.type}`)
 			}
 		}
 	}
 
 	send(frame: ClientFrame): void {
 		if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-			this.log('warn', `Cannot send: WebSocket not connected (readyState=${this.ws?.readyState ?? 'null'})`)
+			this.log('warn', `[WS] Cannot send: not connected (readyState=${this.ws?.readyState ?? 'null'})`)
 			return
 		}
 
 		if (this.config.debugLogging) {
-			this.log('debug', `WS send: ${frame.type}`)
+			this.log('debug', `[WS] Sending: ${frame.type}`)
 		}
 
 		this.ws.send(JSON.stringify(frame))
@@ -168,7 +168,7 @@ export class LivePlayWebSocket {
 			try {
 				handler(connected)
 			} catch (_error) {
-				this.log('error', 'Error in connection handler')
+				this.log('error', '[WS] Error in connection handler')
 			}
 		})
 	}

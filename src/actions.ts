@@ -57,7 +57,7 @@ function modeToggleAction(
 		options: [],
 		callback: () => {
 			self.activeMode = self.activeMode === mode ? 'none' : mode
-			self.log('info', `${name}: ${self.activeMode === mode ? 'ON' : 'OFF'}`)
+			self.log('info', `[Action] ${name}: ${self.activeMode === mode ? 'ON' : 'OFF'}`)
 		},
 	}
 }
@@ -212,7 +212,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: (event) => {
 				const target = resolveCue(self, event.options)
 				if (!target?.item_uuid) {
-					self.log('warn', 'Set Next: no item resolved')
+					self.log('warn', '[Action] Set Next: no item resolved')
 					return
 				}
 				self.webSocketClient?.send({ type: 'set_next_item', item_uuid: target.item_uuid })
@@ -226,7 +226,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: (event) => {
 				const target = resolveCue(self, event.options)
 				if (!target?.item_uuid) {
-					self.log('warn', 'Toggle Next: no item resolved')
+					self.log('warn', '[Action] Toggle Next: no item resolved')
 					return
 				}
 				self.webSocketClient?.send({

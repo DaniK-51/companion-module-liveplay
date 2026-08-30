@@ -98,7 +98,10 @@ export class ModuleState {
 			this.cartSlots.set(cart.slot, cart.itemUuid)
 		}
 
-		this.log('info', `Loaded project "${project.name}" with ${this.projectItems.size} items`)
+		this.log(
+			'info',
+			`[State] Project loaded: "${project.name}" (${this.projectItems.size} items, ${project.cartItems.length} cart slots)`,
+		)
 	}
 
 	loadEngineCues(
@@ -185,7 +188,7 @@ export class ModuleState {
 			if (cue) cue.itemUuid = uuid
 		}
 
-		this.log('debug', `Built ${this.uuidToCueId.size} uuid↔cueId cross-references`)
+		this.log('debug', `[State] Cross-references built: ${this.uuidToCueId.size} uuid↔cueId pairs`)
 	}
 
 	// === WebSocket Message Handlers ===
@@ -202,7 +205,11 @@ export class ModuleState {
 		this.recalculateState()
 
 		if (this.debugLogging) {
-			this.log('debug', `cue_state: ${msg.cue_id} transport=${msg.transport} pos=${msg.playhead_seconds.toFixed(2)}s`)
+			const stateNames = ['stopped', 'playing', 'fading', 'paused']
+			this.log(
+				'debug',
+				`[State] Cue ${msg.cue_id}: ${stateNames[msg.transport] ?? msg.transport} at ${msg.playhead_seconds.toFixed(2)}s`,
+			)
 		}
 	}
 
@@ -232,7 +239,10 @@ export class ModuleState {
 		this.recalculateState()
 
 		if (this.debugLogging) {
-			this.log('debug', `playback_snapshot: ${msg.cues.length} cues, master=${msg.master_gain_db}dB`)
+			this.log(
+				'debug',
+				`[State] Snapshot received: ${msg.cues.length} cues, master=${msg.master_gain_db.toFixed(1)}dB, next=${msg.next_item_uuid ?? 'none'}`,
+			)
 		}
 	}
 
@@ -259,7 +269,10 @@ export class ModuleState {
 
 		if (this.debugLogging) {
 			const masterPeak = this.masterMeters.get(0)?.peakDb ?? -Infinity
-			this.log('debug', `meters: master=${masterPeak.toFixed(1)}dB cues=${msg.items.length}`)
+			this.log(
+				'debug',
+				`[State] Meters: master=${masterPeak.toFixed(1)}dB, ${msg.items.length} active cues, ${msg.mixer_channels.length} mixers`,
+			)
 		}
 	}
 
@@ -267,7 +280,7 @@ export class ModuleState {
 		this.selectedItemUuid = msg.item_uuid || null
 
 		if (this.debugLogging) {
-			this.log('debug', `set_selection: ${msg.item_uuid}`)
+			this.log('debug', `[State] Selection changed: ${msg.item_uuid}`)
 		}
 	}
 
@@ -277,12 +290,12 @@ export class ModuleState {
 		const op = msg.op
 
 		if (this.debugLogging) {
-			this.log('debug', `doc_patch: ${op}`)
+			this.log('debug', `[State] doc_patch: ${op}`)
 		}
 
 		switch (op) {
 			case 'project_changed':
-				this.log('info', 'Project changed, reloading...')
+				this.log('info', '[State] Project document changed, reloading...')
 				return { reloadProject: true }
 
 			case 'item_added':
@@ -322,7 +335,7 @@ export class ModuleState {
 			case 'selection_changed':
 				this.selectedItemUuid = (msg.itemUuid as string) || null
 				if (this.debugLogging) {
-					this.log('debug', `selection_changed: ${this.selectedItemUuid}`)
+					this.log('debug', `[State] Selection changed via doc_patch: ${this.selectedItemUuid}`)
 				}
 				break
 
@@ -330,7 +343,7 @@ export class ModuleState {
 				this.previewItemUuid = (msg.itemUuid as string) || null
 				this.previewCueId = (msg.cueId as string) || null
 				if (this.debugLogging) {
-					this.log('debug', `preview_started: ${this.previewItemUuid}`)
+					this.log('debug', `[State] Preview started: ${this.previewItemUuid}`)
 				}
 				break
 
@@ -338,7 +351,7 @@ export class ModuleState {
 				this.previewItemUuid = null
 				this.previewCueId = null
 				if (this.debugLogging) {
-					this.log('debug', 'preview_stopped')
+					this.log('debug', '[State] Preview stopped')
 				}
 				break
 
@@ -350,7 +363,7 @@ export class ModuleState {
 
 			default:
 				if (this.debugLogging) {
-					this.log('debug', `Unhandled doc_patch op: ${op}`)
+					this.log('debug', `[State] Unhandled doc_patch op: ${op}`)
 				}
 		}
 
@@ -385,7 +398,7 @@ export class ModuleState {
 			this.cueIdToUuid.set(cueId, uuid)
 		}
 
-		this.log('info', `Item added: ${item.displayName} (${uuid})`)
+		this.log('info', `[State] Item added: "${item.displayName}" (${uuid})${cueId ? `, cue=${cueId}` : ''}`)
 	}
 
 	private handleItemUpdated(msg: DocPatchMessage): void {
@@ -396,14 +409,14 @@ export class ModuleState {
 
 		const existing = this.projectItems.get(uuid)
 		if (!existing) {
-			this.log('warn', `item_updated for unknown uuid: ${uuid}`)
+			this.log('warn', `[State] item_updated for unknown uuid: ${uuid}`)
 			return
 		}
 
 		Object.assign(existing, patch)
 
 		if (this.debugLogging) {
-			this.log('debug', `Item updated: ${uuid}`)
+			this.log('debug', `[State] Item updated: ${uuid}`)
 		}
 	}
 
@@ -423,7 +436,7 @@ export class ModuleState {
 			this.cueIdToUuid.delete(cueId)
 		}
 
-		this.log('info', `Item removed: ${item.displayName} (${uuid})`)
+		this.log('info', `[State] Item removed: "${item.displayName}" (${uuid})`)
 	}
 
 	private handleItemsReordered(msg: DocPatchMessage): void {
@@ -435,7 +448,7 @@ export class ModuleState {
 		const targetArray = parentUuid ? this.projectItems.get(parentUuid)?.children : this.projectTree
 
 		if (!targetArray) {
-			this.log('warn', `items_reordered: parent not found: ${parentUuid}`)
+			this.log('warn', `[State] items_reordered: parent not found: ${parentUuid}`)
 			return
 		}
 
@@ -453,7 +466,7 @@ export class ModuleState {
 		this.recalculateIndices()
 
 		if (this.debugLogging) {
-			this.log('debug', `Items reordered under ${parentUuid || 'root'}: ${uuids.length} items`)
+			this.log('debug', `[State] Items reordered under ${parentUuid || 'root'}: ${uuids.length} items`)
 		}
 	}
 
@@ -464,7 +477,7 @@ export class ModuleState {
 		if (typeof slot === 'number' && itemUuid) {
 			this.cartSlots.set(slot, itemUuid)
 			if (this.debugLogging) {
-				this.log('debug', `Cart slot ${slot} set to ${itemUuid}`)
+				this.log('debug', `[State] Cart slot ${slot} set to ${itemUuid}`)
 			}
 		}
 	}
@@ -475,7 +488,7 @@ export class ModuleState {
 		if (typeof slot === 'number') {
 			this.cartSlots.delete(slot)
 			if (this.debugLogging) {
-				this.log('debug', `Cart slot ${slot} cleared`)
+				this.log('debug', `[State] Cart slot ${slot} cleared`)
 			}
 		}
 	}

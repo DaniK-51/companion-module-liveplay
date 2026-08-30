@@ -76,11 +76,11 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.webSocketClient.onConnectionChange((connected) => {
 			if (connected) {
 				this.updateStatus(InstanceStatus.Ok)
-				this.log('info', 'Connected to LivePlay server')
+				this.log('info', '[Main] WebSocket connected to LivePlay server')
 				void this.loadProjectState()
 			} else {
 				this.updateStatus(InstanceStatus.UnknownWarning)
-				this.log('warn', 'Disconnected from LivePlay server')
+				this.log('warn', '[Main] WebSocket disconnected from LivePlay server')
 			}
 		})
 
@@ -90,7 +90,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				try {
 					handler(msg as T)
 				} catch (error) {
-					this.log('error', `Failed to handle ${name}: ${error}`)
+					this.log('error', `[Main] Failed to handle ${name}: ${error}`)
 				}
 			}
 
@@ -132,7 +132,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	private async loadProjectState(): Promise<void> {
 		if (!this.apiClient) return
-		this.log('info', 'Loading project state from LivePlay server...')
+		this.log('info', '[Main] Loading project state from LivePlay server...')
 
 		try {
 			const [project, cues, mixers, devices, masterGain] = await Promise.all([
@@ -152,10 +152,10 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 			this.log(
 				'info',
-				`Project state loaded: ${this.state.projectItems.size} items, ${this.state.engineCues.size} cues, ${this.state.mixers.size} mixers, ${this.state.devices.size} devices`,
+				`[Main] Project state loaded: ${this.state.projectItems.size} items, ${this.state.engineCues.size} cues, ${this.state.mixers.size} mixers, ${this.state.devices.size} devices`,
 			)
 		} catch (error) {
-			this.log('error', `Failed to load project state: ${error}`)
+			this.log('error', `[Main] Failed to load project state: ${error}`)
 		}
 	}
 
@@ -193,7 +193,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	async destroy(): Promise<void> {
-		this.log('debug', 'destroy')
+		this.log('debug', '[Main] Module destroying...')
 		if (this.connectionMonitorIntervalId) {
 			clearInterval(this.connectionMonitorIntervalId)
 			this.connectionMonitorIntervalId = null

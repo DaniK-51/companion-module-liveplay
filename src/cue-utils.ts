@@ -27,7 +27,7 @@ export function resolveCue(
 			if (!opts.cueId) return null
 			const item = self.state.findItemByIndex(opts.cueId)
 			if (!item) {
-				self.log('warn', `No item found at index path: ${opts.cueId}`)
+				self.log('warn', `[Cue] No item found at index path: ${opts.cueId}`)
 				return null
 			}
 			return { item_uuid: item.uuid }
@@ -35,7 +35,7 @@ export function resolveCue(
 		case 'selected': {
 			const uuid = self.state.selectedItemUuid
 			if (!uuid) {
-				self.log('warn', 'No item selected in LivePlay')
+				self.log('warn', '[Cue] No item selected in LivePlay')
 				return null
 			}
 			return { item_uuid: uuid }
