@@ -117,19 +117,19 @@ export class ModuleState {
 		}>,
 	): void {
 		this.engineCues.clear()
-		for (const cue of cues) {
-			this.engineCues.set(cue.id, {
-				id: cue.id,
-				displayName: cue.display_name,
-				filePath: cue.file_path,
-				artist: cue.artist,
-				title: cue.title,
-				durationSec: cue.duration_sec,
-				gainDb: cue.gain_db,
-				fadeInMs: cue.fade_in_ms,
-				fadeOutMs: cue.fade_out_ms,
-				sourceChannels: cue.source_channels,
-				fileLoaded: cue.file_loaded,
+		for (const c of cues) {
+			this.engineCues.set(c.id, {
+				id: c.id,
+				displayName: c.display_name,
+				filePath: c.file_path,
+				artist: c.artist,
+				title: c.title,
+				durationSec: c.duration_sec,
+				gainDb: c.gain_db,
+				fadeInMs: c.fade_in_ms,
+				fadeOutMs: c.fade_out_ms,
+				sourceChannels: c.source_channels,
+				fileLoaded: c.file_loaded,
 			})
 		}
 	}
@@ -138,13 +138,13 @@ export class ModuleState {
 		mixers: Array<{ id: string; display_name: string; gain_db: number; muted: boolean; soloed: boolean }>,
 	): void {
 		this.mixers.clear()
-		for (const mixer of mixers) {
-			this.mixers.set(mixer.id, {
-				id: mixer.id,
-				displayName: mixer.display_name,
-				gainDb: mixer.gain_db,
-				muted: mixer.muted,
-				soloed: mixer.soloed,
+		for (const m of mixers) {
+			this.mixers.set(m.id, {
+				id: m.id,
+				displayName: m.display_name,
+				gainDb: m.gain_db,
+				muted: m.muted,
+				soloed: m.soloed,
 			})
 		}
 	}
@@ -159,13 +159,13 @@ export class ModuleState {
 		}>,
 	): void {
 		this.devices.clear()
-		for (const device of devices) {
-			this.devices.set(device.id, {
-				id: device.id,
-				displayName: device.display_name,
-				channelCount: device.channel_count,
-				sampleRate: device.sample_rate,
-				isDefault: device.is_default,
+		for (const d of devices) {
+			this.devices.set(d.id, {
+				id: d.id,
+				displayName: d.display_name,
+				channelCount: d.channel_count,
+				sampleRate: d.sample_rate,
+				isDefault: d.is_default,
 			})
 		}
 	}
@@ -485,16 +485,23 @@ export class ModuleState {
 
 	// === Tree Operations ===
 
-	private flattenItems(items: ProjectItem[], parentIndex: number[] = []): void {
-		items.forEach((item, i) => {
+	private walkTree(tree: ProjectItem[], parentIndex: number[], register: boolean): void {
+		for (let i = 0; i < tree.length; i++) {
 			const index = [...parentIndex, i]
-			item.index = index
-			this.projectItems.set(item.uuid, item)
-
-			if (item.children && item.type === 'group') {
-				this.flattenItems(item.children, index)
+			tree[i].index = index
+			if (register) this.projectItems.set(tree[i].uuid, tree[i])
+			if (tree[i].children && tree[i].type === 'group') {
+				this.walkTree(tree[i].children!, index, register)
 			}
-		})
+		}
+	}
+
+	private flattenItems(items: ProjectItem[]): void {
+		this.walkTree(items, [], true)
+	}
+
+	recalculateIndices(tree: ProjectItem[] = this.projectTree, parentIndex: number[] = []): void {
+		this.walkTree(tree, parentIndex, false)
 	}
 
 	private removeFromTree(tree: ProjectItem[], uuid: string): boolean {
@@ -503,80 +510,40 @@ export class ModuleState {
 				tree.splice(i, 1)
 				return true
 			}
-			if (tree[i].children && this.removeFromTree(tree[i].children!, uuid)) {
-				return true
-			}
+			if (tree[i].children && this.removeFromTree(tree[i].children!, uuid)) return true
 		}
 		return false
 	}
 
-	recalculateIndices(tree: ProjectItem[] = this.projectTree, parentIndex: number[] = []): void {
-		tree.forEach((item, i) => {
-			const index = [...parentIndex, i]
-			item.index = index
-
-			if (item.children && item.type === 'group') {
-				this.recalculateIndices(item.children, index)
-			}
-		})
-	}
-
-	/**
-	 * Find the next sibling item in the same parent array.
-	 * Returns undefined if this is the last item or not found.
-	 */
 	findNextSibling(uuid: string): ProjectItem | undefined {
-		const item = this.projectItems.get(uuid)
-		if (!item) return undefined
-
-		// Walk the tree to find the parent array containing this item
 		const findInTree = (tree: ProjectItem[]): ProjectItem | undefined => {
 			for (let i = 0; i < tree.length; i++) {
-				if (tree[i].uuid === uuid) {
-					// Found it — return the next sibling if it exists
-					return i + 1 < tree.length ? tree[i + 1] : undefined
-				}
+				if (tree[i].uuid === uuid) return i + 1 < tree.length ? tree[i + 1] : undefined
 				if (tree[i].children && tree[i].type === 'group') {
 					const found = findInTree(tree[i].children!)
-					if (found !== undefined) return found
+					if (found) return found
 				}
 			}
 			return undefined
 		}
-
-		return findInTree(this.projectTree)
+		return this.projectItems.has(uuid) ? findInTree(this.projectTree) : undefined
 	}
 
-	/**
-	 * Find a project item by its index path.
-	 * Accepts comma or slash separated zero-based indices.
-	 * Examples: "5" = 6th top-level item, "1,11" = top-level[1].children[11]
-	 */
 	findItemByIndex(indexPath: string): ProjectItem | null {
 		const parts = indexPath
 			.replace(/\//g, ',')
 			.split(',')
 			.map((s) => parseInt(s.trim(), 10))
-
-		if (parts.some((n) => isNaN(n) || n < 0)) {
-			return null
-		}
+		if (parts.some((n) => isNaN(n) || n < 0)) return null
 
 		let current = this.projectTree
 		let item: ProjectItem | null = null
 
 		for (const idx of parts) {
-			if (idx >= current.length) {
-				return null
-			}
+			if (idx >= current.length) return null
 			item = current[idx]
-			if (item.children && item.type === 'group') {
-				current = item.children
-			} else {
-				current = []
-			}
+			current = item.children && item.type === 'group' ? item.children : []
 		}
-
 		return item
 	}
 
