@@ -406,3 +406,27 @@ Copy `pkg/liveplay` to Companion modules directory:
 - **connect**: Connection logic
 - **state**: State management
 - **update-loop**: Update loop logic
+
+## Documentation Links
+
+### Companion Module Development
+
+- Module development overview: https://companion.free/for-developers/module-development/
+- Action definitions: https://companion.free/for-developers/module-development/connection-basics/actions/
+- Feedback definitions: https://companion.free/for-developers/module-development/connection-basics/feedbacks/
+- Presets (API 2.x): https://companion.free/for-developers/module-development/connection-basics/presets/
+- Variables: https://companion.free/for-developers/module-development/connection-basics/variables/
+- Graphics elements: https://companion.free/for-developers/module-development/connection-basics/graphics-elements/
+- Input field types: https://companion.free/for-developers/module-development/connection-basics/input-field-types/
+- API 2.1 changelog: https://companion.free/for-developers/module-development/api-changes/v2.1/
+- API 2.0 changelog: https://companion.free/for-developers/module-development/api-changes/v2.0/
+
+### LivePlay Server
+
+- Server developer guide (API reference): https://github.com/tdoukinitsas/liveplay/blob/main/server/README.md
+- REST endpoints, WebSocket frames, doc_patch ops, transport states, project file format
+
+### TypeScript References
+
+- Companion module base types: `node_modules/@companion-module/base/dist/`
+- Module schema generics: `InstanceBase<ModuleSchema>` with actions, feedbacks, variables, config, secrets
