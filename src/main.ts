@@ -84,17 +84,40 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			}
 		})
 
-		this.webSocketClient.onMessage('cue_state', (msg) => this.state.handleCueState(msg as CueStateMessage))
-		this.webSocketClient.onMessage('playback_snapshot', (msg) =>
-			this.state.handlePlaybackSnapshot(msg as PlaybackSnapshotMessage),
-		)
-		this.webSocketClient.onMessage('meters', (msg) => this.state.handleMeterUpdate(msg as MeterMessage))
-		this.webSocketClient.onMessage('set_selection', (msg) => this.state.handleSetSelection(msg as SelectionMessage))
-		this.webSocketClient.onMessage('doc_patch', (msg) => {
-			if (this.state.handleDocPatch(msg as DocPatchMessage).reloadProject) {
-				void this.loadProjectState()
+		const safeHandler =
+			<T>(name: string, handler: (msg: T) => void) =>
+			(msg: unknown) => {
+				try {
+					handler(msg as T)
+				} catch (error) {
+					this.log('error', `Failed to handle ${name}: ${error}`)
+				}
 			}
-		})
+
+		this.webSocketClient.onMessage(
+			'cue_state',
+			safeHandler<CueStateMessage>('cue_state', (msg) => this.state.handleCueState(msg)),
+		)
+		this.webSocketClient.onMessage(
+			'playback_snapshot',
+			safeHandler<PlaybackSnapshotMessage>('playback_snapshot', (msg) => this.state.handlePlaybackSnapshot(msg)),
+		)
+		this.webSocketClient.onMessage(
+			'meters',
+			safeHandler<MeterMessage>('meters', (msg) => this.state.handleMeterUpdate(msg)),
+		)
+		this.webSocketClient.onMessage(
+			'set_selection',
+			safeHandler<SelectionMessage>('set_selection', (msg) => this.state.handleSetSelection(msg)),
+		)
+		this.webSocketClient.onMessage(
+			'doc_patch',
+			safeHandler<DocPatchMessage>('doc_patch', (msg) => {
+				if (this.state.handleDocPatch(msg).reloadProject) {
+					void this.loadProjectState()
+				}
+			}),
+		)
 
 		this.updateStatus(InstanceStatus.Connecting)
 		this.webSocketClient.connect()
