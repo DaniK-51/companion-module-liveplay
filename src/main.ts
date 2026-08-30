@@ -49,9 +49,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	webSocketClient: LivePlayWebSocket | null = null
 	state!: ModuleState
 	connectionStatus: InstanceStatus = InstanceStatus.UnknownWarning
-	noPlayMode = false
-	previewMode = false
-	nextMode = false
+	activeMode: 'none' | 'noPlay' | 'preview' | 'next' = 'none'
 	private connectionMonitorIntervalId: ReturnType<typeof setInterval> | null = null
 	private updateIntervalId: ReturnType<typeof setInterval> | null = null
 

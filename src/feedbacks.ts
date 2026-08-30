@@ -29,14 +29,14 @@ function cueTransportFeedback(
 	}
 }
 
-// Helper: mode assigned feedback
+// Helper: mode assigned feedback (checks activeMode)
 function modeAssignedFeedback(
 	self: ModuleInstance,
 	name: string,
 	description: string,
 	bgcolor: number,
 	labelColor: number,
-	property: 'noPlayMode' | 'previewMode' | 'nextMode',
+	mode: 'noPlay' | 'preview' | 'next',
 ) {
 	return {
 		name,
@@ -45,7 +45,7 @@ function modeAssignedFeedback(
 		defaultStyle: { bgcolor, color: labelColor },
 		options: feedbackCueOptions(),
 		callback: (feedback: { options: CompanionOptionValues }) => {
-			if (!self[property]) return false
+			if (self.activeMode !== mode) return false
 			const opts = feedback.options as unknown as CueLookupOptions
 			return !!opts.cueId
 		},
@@ -124,7 +124,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			type: 'boolean',
 			defaultStyle: { bgcolor: 0xff8800, color: 0x000000 },
 			options: [],
-			callback: () => self.noPlayMode,
+			callback: () => self.activeMode === 'noPlay',
 		},
 
 		no_play_assigned: modeAssignedFeedback(
@@ -133,7 +133,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			'Active when no-play mode is on and a cue is assigned',
 			0x0066ff,
 			0xffffff,
-			'noPlayMode',
+			'noPlay',
 		),
 
 		preview_mode_active: {
@@ -142,7 +142,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			type: 'boolean',
 			defaultStyle: { bgcolor: 0x9933ff, color: 0xffffff },
 			options: [],
-			callback: () => self.previewMode,
+			callback: () => self.activeMode === 'preview',
 		},
 
 		preview_mode_assigned: modeAssignedFeedback(
@@ -151,7 +151,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			'Active when preview mode is on and a cue is assigned',
 			0x9933ff,
 			0xffffff,
-			'previewMode',
+			'preview',
 		),
 
 		next_mode_active: {
@@ -160,7 +160,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			type: 'boolean',
 			defaultStyle: { bgcolor: 0x00ccff, color: 0x000000 },
 			options: [],
-			callback: () => self.nextMode,
+			callback: () => self.activeMode === 'next',
 		},
 
 		next_mode_assigned: modeAssignedFeedback(
@@ -169,7 +169,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			'Active when next mode is on and a cue is assigned',
 			0x00ccff,
 			0x000000,
-			'nextMode',
+			'next',
 		),
 
 		cue_is_next: {

@@ -44,20 +44,20 @@ function cueTransportAction(
 	}
 }
 
-// Helper: mode toggle action
+// Helper: mode toggle action (mutually exclusive — toggles off if already active)
 function modeToggleAction(
 	self: ModuleInstance,
 	name: string,
 	description: string,
-	property: 'noPlayMode' | 'previewMode' | 'nextMode',
+	mode: 'noPlay' | 'preview' | 'next',
 ) {
 	return {
 		name,
 		description,
 		options: [],
 		callback: () => {
-			self[property] = !self[property]
-			self.log('info', `${name}: ${self[property] ? 'ON' : 'OFF'}`)
+			self.activeMode = self.activeMode === mode ? 'none' : mode
+			self.log('info', `${name}: ${self.activeMode === mode ? 'ON' : 'OFF'}`)
 		},
 	}
 }
@@ -158,19 +158,19 @@ export function UpdateActions(self: ModuleInstance): void {
 			self,
 			'Toggle No-Play Mode',
 			'Switch between normal and no-play mode for button setup',
-			'noPlayMode',
+			'noPlay',
 		),
 		toggle_preview_mode: modeToggleAction(
 			self,
 			'Toggle Preview Mode',
 			'Switch between normal and preview mode (pre-listen)',
-			'previewMode',
+			'preview',
 		),
 		toggle_next_mode: modeToggleAction(
 			self,
 			'Toggle Next Mode',
 			'Switch between normal and next mode (set Up Next)',
-			'nextMode',
+			'next',
 		),
 
 		play_cue_preview: {
