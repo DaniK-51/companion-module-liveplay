@@ -128,6 +128,7 @@ export function UpdateActions(self: ModuleInstance): void {
 	self.setActionDefinitions({
 		play_cue: {
 			name: 'Play Cue',
+			description: 'Start playback of a cue',
 			options: cueOptions(),
 			callback: (event) => {
 				const opts = event.options
@@ -138,6 +139,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		stop_cue: {
 			name: 'Stop Cue',
+			description: 'Stop playback of a cue',
 			options: cueOptions(),
 			callback: (event) => {
 				const opts = event.options
@@ -148,6 +150,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		pause_cue: {
 			name: 'Pause Cue',
+			description: 'Pause playback of a cue',
 			options: cueOptions(),
 			callback: (event) => {
 				const opts = event.options
@@ -158,6 +161,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		resume_cue: {
 			name: 'Resume Cue',
+			description: 'Resume paused playback of a cue',
 			options: cueOptions(),
 			callback: (event) => {
 				const opts = event.options
@@ -168,6 +172,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		toggle_cue: {
 			name: 'Toggle Play/Stop',
+			description: 'Start playback if stopped, stop if playing',
 			options: cueOptions(),
 			callback: (event) => {
 				const opts = event.options
@@ -190,6 +195,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		toggle_pause_cue: {
 			name: 'Toggle Pause/Resume',
+			description: 'Pause if playing, resume if paused',
 			options: cueOptions(),
 			callback: (event) => {
 				const opts = event.options
@@ -204,6 +210,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		seek_cue: {
 			name: 'Seek Cue',
+			description: 'Seek to a specific position in seconds',
 			options: [
 				...cueOptions(),
 				{
@@ -224,6 +231,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		set_cue_gain: {
 			name: 'Set Cue Gain',
+			description: 'Set the gain level for a cue in dB',
 			options: [
 				...cueOptions(),
 				{
@@ -244,6 +252,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		set_cue_fade: {
 			name: 'Set Cue Fade',
+			description: 'Set fade in/out durations for a cue',
 			options: [
 				...cueOptions(),
 				{
@@ -272,6 +281,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		stop_all: {
 			name: 'Stop All',
+			description: 'Stop all currently playing cues',
 			options: [],
 			callback: () => {
 				self.webSocketClient?.send({ type: 'stop_all' })
@@ -279,6 +289,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		set_master_gain: {
 			name: 'Set Master Gain',
+			description: 'Set the master output gain in dB',
 			options: [
 				{
 					id: 'db',

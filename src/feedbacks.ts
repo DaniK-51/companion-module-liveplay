@@ -75,6 +75,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		any_cue_playing: {
 			name: 'Any Cue Playing',
+			description: 'Active when any cue is playing',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x00ff00,
@@ -88,6 +89,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		any_cue_paused: {
 			name: 'Any Cue Paused',
+			description: 'Active when any cue is paused',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0xffff00,
@@ -100,6 +102,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		cue_is_playing: {
 			name: 'Cue Is Playing',
+			description: 'Active when the specified cue is playing',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x00ff00,
@@ -115,6 +118,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		cue_is_paused: {
 			name: 'Cue Is Paused',
+			description: 'Active when the specified cue is paused',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0xffff00,
@@ -130,6 +134,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		cue_is_stopped: {
 			name: 'Cue Is Stopped',
+			description: 'Active when the specified cue is stopped',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0xff0000,
@@ -146,6 +151,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		cue_ready_to_assign: {
 			name: 'Cue Ready to Assign',
+			description: 'Active when no cue is assigned and one is selected in LivePlay',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x00ff00,
@@ -161,6 +167,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		no_play_active: {
 			name: 'No-Play Mode Active',
+			description: 'Active when no-play mode is enabled',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0xff8800,
@@ -172,7 +179,8 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 		},
 		no_play_assigned: {
-			name: 'No-Play Mode: Assigned (Blue)',
+			name: 'No-Play Mode: Assigned',
+			description: 'Active when no-play mode is on and a cue is assigned',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x0066ff,
@@ -189,6 +197,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		preview_mode_active: {
 			name: 'Preview Mode Active',
+			description: 'Active when preview mode is enabled',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x9933ff,
@@ -200,7 +209,8 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 		},
 		preview_mode_assigned: {
-			name: 'Preview Mode: Assigned (Purple)',
+			name: 'Preview Mode: Assigned',
+			description: 'Active when preview mode is on and a cue is assigned',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x9933ff,
@@ -217,6 +227,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		next_mode_active: {
 			name: 'Next Mode Active',
+			description: 'Active when next mode is enabled',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x00ccff,
@@ -228,7 +239,8 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 		},
 		next_mode_assigned: {
-			name: 'Next Mode: Assigned (Cyan)',
+			name: 'Next Mode: Assigned',
+			description: 'Active when next mode is on and a cue is assigned',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x00ccff,
@@ -245,6 +257,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		cue_is_next: {
 			name: 'Cue Is Next',
+			description: 'Active when the cue is set as next (manual or auto)',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: 0x00ccff,
