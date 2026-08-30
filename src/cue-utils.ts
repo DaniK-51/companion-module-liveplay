@@ -82,50 +82,32 @@ export function resolveUuid(self: ModuleInstance, opts: CueLookupOptions): strin
 	}
 }
 
+const CUE_OPTIONS = [
+	{
+		id: 'lookupMode',
+		type: 'dropdown' as const,
+		label: 'Lookup Mode',
+		default: 'uuid',
+		choices: [
+			{ id: 'uuid', label: 'By UUID' },
+			{ id: 'cue_id', label: 'By Engine Cue ID' },
+			{ id: 'index', label: 'By Index (e.g. 0, 1,3)' },
+			{ id: 'selected', label: 'Selected in LivePlay' },
+		],
+	},
+	{
+		id: 'cueId',
+		type: 'textinput' as const,
+		label: 'Cue ID / UUID / Index (not needed for Selected mode)',
+		default: '',
+		useVariables: true,
+	},
+]
+
 export function cueOptions(): SomeCompanionActionInputField[] {
-	return [
-		{
-			id: 'lookupMode',
-			type: 'dropdown',
-			label: 'Lookup Mode',
-			default: 'uuid',
-			choices: [
-				{ id: 'uuid', label: 'By UUID' },
-				{ id: 'cue_id', label: 'By Engine Cue ID' },
-				{ id: 'index', label: 'By Index (e.g. 0, 1,3)' },
-				{ id: 'selected', label: 'Selected in LivePlay' },
-			],
-		},
-		{
-			id: 'cueId',
-			type: 'textinput',
-			label: 'Cue ID / UUID / Index (not needed for Selected mode)',
-			default: '',
-			useVariables: true,
-		},
-	]
+	return CUE_OPTIONS
 }
 
 export function feedbackCueOptions(): SomeCompanionFeedbackInputField[] {
-	return [
-		{
-			id: 'lookupMode',
-			type: 'dropdown',
-			label: 'Lookup Mode',
-			default: 'uuid',
-			choices: [
-				{ id: 'uuid', label: 'By UUID' },
-				{ id: 'cue_id', label: 'By Engine Cue ID' },
-				{ id: 'index', label: 'By Index (e.g. 0, 1,3)' },
-				{ id: 'selected', label: 'Selected in LivePlay' },
-			],
-		},
-		{
-			id: 'cueId',
-			type: 'textinput',
-			label: 'Cue ID / UUID / Index (not needed for Selected mode)',
-			default: '',
-			useVariables: true,
-		},
-	]
+	return CUE_OPTIONS
 }
