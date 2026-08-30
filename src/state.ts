@@ -174,18 +174,15 @@ export class ModuleState {
 		this.uuidToCueId.clear()
 		this.cueIdToUuid.clear()
 
-		for (const [cueId, cue] of this.engineCues) {
-			for (const [uuid, item] of this.projectItems) {
-				if (item.type === 'audio' && item.mediaFileName) {
-					if (cue.filePath.endsWith(item.mediaFileName) || cue.displayName === item.displayName) {
-						this.uuidToCueId.set(uuid, cueId)
-						this.cueIdToUuid.set(cueId, uuid)
-						item.cueId = cueId
-						cue.itemUuid = uuid
-						break
-					}
-				}
-			}
+		for (const [uuid, item] of this.projectItems) {
+			if (item.type !== 'audio' || !item.cueId) continue
+
+			const cueId = item.cueId
+			this.uuidToCueId.set(uuid, cueId)
+			this.cueIdToUuid.set(cueId, uuid)
+
+			const cue = this.engineCues.get(cueId)
+			if (cue) cue.itemUuid = uuid
 		}
 
 		this.log('debug', `Built ${this.uuidToCueId.size} uuid↔cueId cross-references`)
