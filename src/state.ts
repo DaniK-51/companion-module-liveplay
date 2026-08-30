@@ -44,6 +44,7 @@ export class ModuleState {
 	cueStates = new Map<string, TransportState>() // cue_id → transport
 	cuePositions = new Map<string, number>() // cue_id → playhead_seconds
 	nextItemUuid: string | null = null
+	autoNextItemUuid: string | null = null
 	selectedItemUuid: string | null = null // last cue selected in LivePlay UI
 
 	// === Real-time Meters ===
@@ -635,6 +636,7 @@ export class ModuleState {
 		this.devices.clear()
 		this.selectedItemUuid = null
 		this.nextItemUuid = null
+		this.autoNextItemUuid = null
 		this.masterGainDb = 0
 	}
 }

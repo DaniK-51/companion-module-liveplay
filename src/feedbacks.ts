@@ -273,7 +273,13 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 						break
 				}
 
-				return uuid ? self.state.nextItemUuid === uuid : false
+				if (!uuid) return false
+				if (self.state.nextItemUuid === uuid) return true
+
+				// Also check auto-next: if no manual next, check if this cue is the auto-next sibling
+				if (!self.state.nextItemUuid && self.state.autoNextItemUuid === uuid) return true
+
+				return false
 			},
 		},
 	} satisfies CompanionFeedbackDefinitions)

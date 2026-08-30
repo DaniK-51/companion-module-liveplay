@@ -100,6 +100,7 @@ export function UpdateVariables(self: ModuleInstance): void {
 	const currentCueEndBehavior = currentItem?.endBehavior?.action ?? 'nothing'
 	const autoNextUuid =
 		currentUuid && currentCueEndBehavior === 'next' ? (s.findNextSibling(currentUuid)?.uuid ?? '') : ''
+	s.autoNextItemUuid = autoNextUuid || null
 	const autoNextItem = autoNextUuid ? s.projectItems.get(autoNextUuid) : undefined
 
 	// Effective next: manual always takes priority over auto
